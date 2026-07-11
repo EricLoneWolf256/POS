@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, ShoppingCart, Package, Users, BarChart3,
   Settings, LogOut, Warehouse, Receipt, Factory, Truck, Wifi, WifiOff,
-  FileText, ShoppingCart as CartIcon, ChevronDown, Building2, Check
+  FileText, ShoppingCart as CartIcon, ChevronDown, Building2, Check, UserCog
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
@@ -16,6 +16,7 @@ const navItems = [
   { to: '/app/stock', icon: Warehouse, label: 'Stock' },
   { to: '/app/sales', icon: Receipt, label: 'Sales' },
   { to: '/app/customers', icon: Users, label: 'Customers' },
+  { to: '/app/employees', icon: UserCog, label: 'Employees' },
   { to: '/app/quotations', icon: FileText, label: 'Quotations', plan: 'quotations' },
   { to: '/app/purchases', icon: CartIcon, label: 'Purchases' },
   { to: '/app/reports', icon: BarChart3, label: 'Reports' },

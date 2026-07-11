@@ -25,6 +25,7 @@ import paymentRoutes from './routes/payments.js';
 import exportRoutes from './routes/exports.js';
 import notificationRoutes from './routes/notifications.js';
 import uploadRoutes from './routes/uploads.js';
+import employeeRoutes from './routes/employees.js';
 
 dotenv.config();
 
@@ -74,6 +75,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/exports', exportRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/employees', employeeRoutes);
 
 app.use(errorHandler);
 

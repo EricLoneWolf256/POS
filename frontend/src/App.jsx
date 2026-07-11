@@ -18,6 +18,7 @@ import Reports from './pages/Reports';
 import Manufacturing from './pages/Manufacturing';
 import FieldSales from './pages/FieldSales';
 import Settings from './pages/Settings';
+import Employees from './pages/Employees';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -47,6 +48,7 @@ export default function App() {
         <Route path="stock" element={<Stock />} />
         <Route path="sales" element={<Sales />} />
         <Route path="customers" element={<Customers />} />
+        <Route path="employees" element={<Employees />} />
         <Route path="quotations" element={<Quotations />} />
         <Route path="purchases" element={<Purchases />} />
         <Route path="reports" element={<Reports />} />

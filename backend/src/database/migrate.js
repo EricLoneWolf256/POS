@@ -84,5 +84,27 @@ try {
   console.log('SKIP:', e.message);
 }
 
+try {
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS employee_attendance (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      business_id INT NOT NULL,
+      user_id INT NOT NULL,
+      branch_id INT NOT NULL,
+      clock_in TIMESTAMP NOT NULL,
+      clock_out TIMESTAMP NULL,
+      notes TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE CASCADE,
+      INDEX idx_user_date (user_id, clock_in)
+    )
+  `);
+  console.log('OK: employee_attendance table');
+} catch (e) {
+  console.log('SKIP:', e.message);
+}
+
 await conn.end();
 console.log('Migration complete!');
