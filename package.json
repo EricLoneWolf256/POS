@@ -1,0 +1,18 @@
+{
+  "name": "venderra-pos",
+  "version": "1.0.0",
+  "description": "Venderra - Uganda's most trusted POS software",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "db:setup": "cd backend && npm run db:setup",
+    "db:seed": "cd backend && npm run db:seed"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
