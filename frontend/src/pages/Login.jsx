@@ -4,8 +4,8 @@ import { Check, Loader, ArrowRight, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
-  const [email, setEmail] = useState('admin@venderra.ug');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -151,13 +151,6 @@ export default function Login() {
               )}
             </button>
           </form>
-
-          {/* Demo hint */}
-          <div className="mt-6 p-3 bg-slate-50 border border-slate-100 rounded-xl">
-            <p className="text-[12px] text-slate-400 text-center">
-              Demo login: <span className="font-mono font-semibold text-slate-500">admin@venderra.ug</span> <span className="text-slate-300">/</span> <span className="font-mono font-semibold text-slate-500">admin123</span>
-            </p>
-          </div>
 
           {/* Register link */}
           <p className="text-center text-sm text-slate-400 mt-6">
