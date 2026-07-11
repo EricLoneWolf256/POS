@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import pool from '../config/database.js';
 
 export function authenticate(req, res, next) {
   const header = req.headers.authorization;
@@ -34,6 +35,30 @@ export function requirePlan(...features) {
         error: 'This feature requires a higher subscription plan',
         requiredFeatures: features,
       });
+    }
+    next();
+  };
+}
+
+export async function validateBranchOwnership(branchId, businessId) {
+  if (!branchId) return true;
+  const [rows] = await pool.query(
+    'SELECT id FROM branches WHERE id = ? AND business_id = ? AND is_active = TRUE',
+    [branchId, businessId]
+  );
+  return rows.length > 0;
+}
+
+export function requireBranchOwnership(...branchParamKeys) {
+  return async (req, res, next) => {
+    for (const key of branchParamKeys) {
+      const branchId = req.body[key] || req.query[key];
+      if (branchId) {
+        const valid = await validateBranchOwnership(branchId, req.user.businessId);
+        if (!valid) {
+          return res.status(403).json({ error: `Branch ${branchId} does not belong to your business` });
+        }
+      }
     }
     next();
   };

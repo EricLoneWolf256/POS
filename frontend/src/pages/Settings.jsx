@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, X, Edit2, Check, CreditCard, Upload, ExternalLink } from 'lucide-react';
+import { Plus, X, Edit2, Check, CreditCard, Upload, ExternalLink, Trash2, Building2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
@@ -13,6 +13,9 @@ export default function Settings() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [userForm, setUserForm] = useState({ firstName: '', lastName: '', email: '', password: '', role: 'cashier', branchId: '' });
+  const [showBranchModal, setShowBranchModal] = useState(false);
+  const [editingBranch, setEditingBranch] = useState(null);
+  const [branchForm, setBranchForm] = useState({ name: '', code: '', address: '', phone: '' });
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => { load(); }, [tab]);
@@ -72,6 +75,43 @@ export default function Settings() {
       console.error('Upload failed:', err);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const openAddBranch = () => {
+    setEditingBranch(null);
+    setBranchForm({ name: '', code: '', address: '', phone: '' });
+    setShowBranchModal(true);
+  };
+
+  const openEditBranch = (b) => {
+    setEditingBranch(b);
+    setBranchForm({ name: b.name, code: b.code || '', address: b.address || '', phone: b.phone || '' });
+    setShowBranchModal(true);
+  };
+
+  const handleBranchSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingBranch) {
+        await api.put(`/auth/branches/${editingBranch.id}`, branchForm);
+      } else {
+        await api.post('/auth/branches', branchForm);
+      }
+      setShowBranchModal(false);
+      load();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to save branch');
+    }
+  };
+
+  const handleDeleteBranch = async (branchId) => {
+    if (!confirm('Are you sure you want to deactivate this branch?')) return;
+    try {
+      await api.delete(`/auth/branches/${branchId}`);
+      load();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to delete branch');
     }
   };
 
@@ -201,7 +241,12 @@ export default function Settings() {
 
       {tab === 'branches' && (
         <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm shadow-slate-200/50">
-          <h3 className="text-base font-semibold tracking-tight text-slate-800 mb-5">Branch Management</h3>
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="text-base font-semibold tracking-tight text-slate-800">Branch Management</h3>
+            <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl text-sm font-semibold shadow-lg shadow-teal-500/25 hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]" onClick={openAddBranch}>
+              <Plus size={16} /> Add Branch
+            </button>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -211,16 +256,29 @@ export default function Settings() {
                   <th className="text-left py-2.5 px-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Address</th>
                   <th className="text-left py-2.5 px-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Phone</th>
                   <th className="text-left py-2.5 px-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Main</th>
+                  <th className="text-right py-2.5 px-4 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {branches.map(b => (
                   <tr key={b.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
                     <td className="py-3 px-4 text-sm font-medium text-slate-700">{b.name}</td>
-                    <td className="py-3 px-4 text-sm text-slate-500 font-mono">{b.code}</td>
-                    <td className="py-3 px-4 text-sm text-slate-600">{b.address}</td>
+                    <td className="py-3 px-4 text-sm text-slate-500 font-mono">{b.code || '—'}</td>
+                    <td className="py-3 px-4 text-sm text-slate-600">{b.address || '—'}</td>
                     <td className="py-3 px-4 text-sm text-slate-500">{b.phone || '—'}</td>
                     <td className="py-3 px-4">{b.is_main ? <span className="inline-flex px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-semibold ring-1 ring-emerald-100/50">Main</span> : '—'}</td>
+                    <td className="py-3 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" onClick={() => openEditBranch(b)}>
+                          <Edit2 size={15} />
+                        </button>
+                        {!b.is_main && (
+                          <button className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" onClick={() => handleDeleteBranch(b.id)}>
+                            <Trash2 size={15} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -392,6 +450,44 @@ export default function Settings() {
                 <button type="button" className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-200" onClick={() => setShowUserModal(false)}>Cancel</button>
                 <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]">
                   {editingUser ? 'Update User' : 'Create User'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {showBranchModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[200] animate-fade-in" onClick={() => setShowBranchModal(false)}>
+          <div className="bg-white rounded-2xl p-8 w-[90%] max-w-[500px] shadow-2xl shadow-slate-900/10 animate-modal-enter" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold tracking-tight text-slate-800 flex items-center gap-2">
+                <Building2 size={20} /> {editingBranch ? 'Edit Branch' : 'Add Branch'}
+              </h3>
+              <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all" onClick={() => setShowBranchModal(false)}><X size={18} /></button>
+            </div>
+            <form onSubmit={handleBranchSubmit}>
+              <div className="mb-4">
+                <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Branch Name *</label>
+                <input className={inputClass} value={branchForm.name} onChange={e => setBranchForm({...branchForm, name: e.target.value})} required placeholder="e.g. Kampala Main" />
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Branch Code</label>
+                  <input className={inputClass} value={branchForm.code} onChange={e => setBranchForm({...branchForm, code: e.target.value})} placeholder="e.g. KLA-01" />
+                </div>
+                <div>
+                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Phone</label>
+                  <input className={inputClass} value={branchForm.phone} onChange={e => setBranchForm({...branchForm, phone: e.target.value})} placeholder="e.g. +256 700 000000" />
+                </div>
+              </div>
+              <div className="mb-6">
+                <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Address</label>
+                <input className={inputClass} value={branchForm.address} onChange={e => setBranchForm({...branchForm, address: e.target.value})} placeholder="e.g. Plot 123, Kampala Road" />
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button type="button" className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-200" onClick={() => setShowBranchModal(false)}>Cancel</button>
+                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]">
+                  {editingBranch ? 'Update Branch' : 'Create Branch'}
                 </button>
               </div>
             </form>

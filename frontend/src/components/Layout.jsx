@@ -1,11 +1,13 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, ShoppingCart, Package, Users, BarChart3,
   Settings, LogOut, Warehouse, Receipt, Factory, Truck, Wifi, WifiOff,
-  FileText, ShoppingCart as CartIcon
+  FileText, ShoppingCart as CartIcon, ChevronDown, Building2, Check
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
+import api from '../services/api';
 
 const navItems = [
   { to: '/app', icon: LayoutDashboard, label: 'Dashboard', end: true },
@@ -23,12 +25,32 @@ const navItems = [
 ];
 
 export default function Layout() {
-  const { user, logout, isOnline } = useAuth();
+  const { user, logout, switchBranch, isOnline } = useAuth();
   const navigate = useNavigate();
+  const [branches, setBranches] = useState([]);
+  const [showBranchDropdown, setShowBranchDropdown] = useState(false);
+
+  useEffect(() => {
+    api.get('/auth/branches').then(res => setBranches(res.data)).catch(() => {});
+  }, []);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleBranchSwitch = async (branchId) => {
+    if (branchId === user?.branchId) {
+      setShowBranchDropdown(false);
+      return;
+    }
+    try {
+      await switchBranch(branchId);
+      setShowBranchDropdown(false);
+      window.location.reload();
+    } catch (err) {
+      console.error('Branch switch failed:', err);
+    }
   };
 
   const filteredNav = navItems.filter(item => {
@@ -94,9 +116,54 @@ export default function Layout() {
 
       <div className="flex-1 ml-[260px] min-h-screen">
         <header className="bg-white/80 backdrop-blur-xl border-b border-slate-200/80 px-8 py-3.5 flex justify-between items-center sticky top-0 z-50">
-          <div>
+          <div className="flex items-center gap-3">
             <strong className="text-slate-800 text-[15px]">{user?.businessName}</strong>
-            <span className="text-slate-400 ml-2 text-sm font-medium">{user?.branchName}</span>
+            {branches.length > 1 ? (
+              <div className="relative">
+                <button
+                  onClick={() => setShowBranchDropdown(!showBranchDropdown)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 hover:border-slate-300 transition-all duration-200"
+                >
+                  <Building2 size={14} className="text-slate-400" />
+                  {user?.branchName}
+                  <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${showBranchDropdown ? 'rotate-180' : ''}`} />
+                </button>
+                {showBranchDropdown && (
+                  <>
+                    <div className="fixed inset-0 z-[99]" onClick={() => setShowBranchDropdown(false)} />
+                    <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl border border-slate-200 shadow-lg shadow-slate-900/10 z-[100] py-1 animate-fade-in">
+                      <div className="px-3 py-2 border-b border-slate-100">
+                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Switch Branch</p>
+                      </div>
+                      {branches.map(b => (
+                        <button
+                          key={b.id}
+                          onClick={() => handleBranchSwitch(b.id)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-all duration-150 ${
+                            b.id === user?.branchId
+                              ? 'bg-teal-50 text-teal-700 font-semibold'
+                              : 'text-slate-600 hover:bg-slate-50'
+                          }`}
+                        >
+                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                            b.id === user?.branchId ? 'bg-teal-100' : 'bg-slate-100'
+                          }`}>
+                            <Building2 size={14} className={b.id === user?.branchId ? 'text-teal-600' : 'text-slate-400'} />
+                          </div>
+                          <div className="flex-1 text-left">
+                            <p className="font-medium">{b.name}</p>
+                            {b.code && <p className="text-[11px] text-slate-400">{b.code}</p>}
+                          </div>
+                          {b.id === user?.branchId && <Check size={16} className="text-teal-600" />}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <span className="text-slate-400 text-sm font-medium">{user?.branchName}</span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-wide uppercase ${

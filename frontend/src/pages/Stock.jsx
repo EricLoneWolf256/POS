@@ -49,7 +49,7 @@ export default function StockPage() {
       fromBranchId: parseInt(transferForm.fromBranchId),
       toBranchId: parseInt(transferForm.toBranchId),
       quantity: parseFloat(transferForm.quantity),
-      notes: transferForm.notes,
+      notes: transferForm.notes || undefined,
     });
     setShowTransfer(false);
     setTransferForm({ productId: '', fromBranchId: '', toBranchId: '', quantity: '', notes: '' });

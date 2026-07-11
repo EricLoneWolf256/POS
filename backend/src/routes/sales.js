@@ -42,6 +42,41 @@ router.get('/', authenticate, asyncHandler(async (req, res) => {
   res.json({ sales, total: count[0].total, page: parseInt(page), limit: parseInt(limit) });
 }));
 
+router.get('/reports/summary', authenticate, asyncHandler(async (req, res) => {
+  const { period = 'today', branchId } = req.query;
+  const branch = branchId || req.user.branchId;
+
+  let dateFilter = 'DATE(s.created_at) = CURDATE()';
+  if (period === 'week') dateFilter = 's.created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)';
+  if (period === 'month') dateFilter = 's.created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)';
+
+  const [summary] = await pool.query(`
+    SELECT COUNT(*) as total_sales, COALESCE(SUM(total_amount), 0) as total_revenue,
+           COALESCE(AVG(total_amount), 0) as avg_sale,
+           COALESCE(SUM(tax_amount), 0) as total_tax
+    FROM sales s WHERE s.business_id = ? AND s.status = 'completed' AND ${dateFilter}
+    ${branch ? 'AND s.branch_id = ?' : ''}
+  `, branch ? [req.user.businessId, branch] : [req.user.businessId]);
+
+  const [topProducts] = await pool.query(`
+    SELECT si.product_name, SUM(si.quantity) as qty_sold, SUM(si.total) as revenue
+    FROM sale_items si JOIN sales s ON si.sale_id = s.id
+    WHERE s.business_id = ? AND s.status = 'completed' AND ${dateFilter}
+    ${branch ? 'AND s.branch_id = ?' : ''}
+    GROUP BY si.product_id, si.product_name ORDER BY revenue DESC LIMIT 10
+  `, branch ? [req.user.businessId, branch] : [req.user.businessId]);
+
+  const [cashierPerf] = await pool.query(`
+    SELECT u.first_name, u.last_name, COUNT(*) as sales_count, SUM(s.total_amount) as revenue
+    FROM sales s JOIN users u ON s.cashier_id = u.id
+    WHERE s.business_id = ? AND s.status = 'completed' AND ${dateFilter}
+    ${branch ? 'AND s.branch_id = ?' : ''}
+    GROUP BY u.id ORDER BY revenue DESC
+  `, branch ? [req.user.businessId, branch] : [req.user.businessId]);
+
+  res.json({ summary: summary[0], topProducts, cashierPerformance: cashierPerf });
+}));
+
 router.get('/:id', authenticate, asyncHandler(async (req, res) => {
   const [sales] = await pool.query(`
     SELECT s.*, u.first_name as cashier_first, u.last_name as cashier_last,
@@ -131,8 +166,8 @@ router.post('/', authenticate, asyncHandler(async (req, res) => {
 
     if (isCredit && customerId) {
       await conn.query(
-        'UPDATE customers SET credit_balance = credit_balance + ? WHERE id = ?',
-        [totalAmount, customerId]
+        'UPDATE customers SET credit_balance = credit_balance + ? WHERE id = ? AND business_id = ?',
+        [totalAmount, customerId, req.user.businessId]
       );
     }
 
@@ -149,41 +184,6 @@ router.post('/', authenticate, asyncHandler(async (req, res) => {
   } finally {
     conn.release();
   }
-}));
-
-router.get('/reports/summary', authenticate, asyncHandler(async (req, res) => {
-  const { period = 'today', branchId } = req.query;
-  const branch = branchId || req.user.branchId;
-
-  let dateFilter = 'DATE(s.created_at) = CURDATE()';
-  if (period === 'week') dateFilter = 's.created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)';
-  if (period === 'month') dateFilter = 's.created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)';
-
-  const [summary] = await pool.query(`
-    SELECT COUNT(*) as total_sales, COALESCE(SUM(total_amount), 0) as total_revenue,
-           COALESCE(AVG(total_amount), 0) as avg_sale,
-           COALESCE(SUM(tax_amount), 0) as total_tax
-    FROM sales s WHERE s.business_id = ? AND s.status = 'completed' AND ${dateFilter}
-    ${branch ? 'AND s.branch_id = ?' : ''}
-  `, branch ? [req.user.businessId, branch] : [req.user.businessId]);
-
-  const [topProducts] = await pool.query(`
-    SELECT si.product_name, SUM(si.quantity) as qty_sold, SUM(si.total) as revenue
-    FROM sale_items si JOIN sales s ON si.sale_id = s.id
-    WHERE s.business_id = ? AND s.status = 'completed' AND ${dateFilter}
-    ${branch ? 'AND s.branch_id = ?' : ''}
-    GROUP BY si.product_id, si.product_name ORDER BY revenue DESC LIMIT 10
-  `, branch ? [req.user.businessId, branch] : [req.user.businessId]);
-
-  const [cashierPerf] = await pool.query(`
-    SELECT u.first_name, u.last_name, COUNT(*) as sales_count, SUM(s.total_amount) as revenue
-    FROM sales s JOIN users u ON s.cashier_id = u.id
-    WHERE s.business_id = ? AND s.status = 'completed' AND ${dateFilter}
-    ${branch ? 'AND s.branch_id = ?' : ''}
-    GROUP BY u.id ORDER BY revenue DESC
-  `, branch ? [req.user.businessId, branch] : [req.user.businessId]);
-
-  res.json({ summary: summary[0], topProducts, cashierPerformance: cashierPerf });
 }));
 
 router.get('/:id/receipt', authenticate, asyncHandler(async (req, res) => {

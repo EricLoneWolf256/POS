@@ -2,7 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import pool from '../config/database.js';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, authorize } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/helpers.js';
 
 const router = express.Router();
@@ -111,6 +111,106 @@ router.get('/branches', authenticate, asyncHandler(async (req, res) => {
     [req.user.businessId]
   );
   res.json(branches);
+}));
+
+router.post('/branches', authenticate, authorize('owner', 'admin'), asyncHandler(async (req, res) => {
+  const { name, code, address, phone } = req.body;
+  if (!name) return res.status(400).json({ error: 'Branch name is required' });
+
+  const [existing] = await pool.query(
+    'SELECT id FROM branches WHERE business_id = ? AND (name = ? OR code = ?)',
+    [req.user.businessId, name, code]
+  );
+  if (existing.length > 0) {
+    return res.status(409).json({ error: 'Branch name or code already exists' });
+  }
+
+  const [result] = await pool.query(`
+    INSERT INTO branches (business_id, name, code, address, phone)
+    VALUES (?, ?, ?, ?, ?)
+  `, [req.user.businessId, name, code, address, phone]);
+
+  const [branch] = await pool.query('SELECT * FROM branches WHERE id = ?', [result.insertId]);
+  res.status(201).json(branch[0]);
+}));
+
+router.put('/branches/:id', authenticate, authorize('owner', 'admin'), asyncHandler(async (req, res) => {
+  const { name, code, address, phone } = req.body;
+  const branchId = req.params.id;
+
+  const [existing] = await pool.query(
+    'SELECT id FROM branches WHERE id = ? AND business_id = ?',
+    [branchId, req.user.businessId]
+  );
+  if (existing.length === 0) {
+    return res.status(404).json({ error: 'Branch not found' });
+  }
+
+  await pool.query(`
+    UPDATE branches SET name = ?, code = ?, address = ?, phone = ?
+    WHERE id = ? AND business_id = ?
+  `, [name, code, address, phone, branchId, req.user.businessId]);
+
+  const [branch] = await pool.query('SELECT * FROM branches WHERE id = ?', [branchId]);
+  res.json(branch[0]);
+}));
+
+router.delete('/branches/:id', authenticate, authorize('owner'), asyncHandler(async (req, res) => {
+  const branchId = req.params.id;
+
+  const [branch] = await pool.query(
+    'SELECT id, is_main FROM branches WHERE id = ? AND business_id = ?',
+    [branchId, req.user.businessId]
+  );
+  if (branch.length === 0) {
+    return res.status(404).json({ error: 'Branch not found' });
+  }
+
+  if (branch[0].is_main) {
+    return res.status(400).json({ error: 'Cannot delete the main branch' });
+  }
+
+  const [usersInBranch] = await pool.query(
+    'SELECT COUNT(*) as count FROM users WHERE branch_id = ? AND business_id = ?',
+    [branchId, req.user.businessId]
+  );
+  if (usersInBranch[0].count > 0) {
+    return res.status(400).json({ error: 'Cannot delete branch with assigned users. Reassign them first.' });
+  }
+
+  await pool.query('UPDATE branches SET is_active = FALSE WHERE id = ?', [branchId]);
+  res.json({ success: true });
+}));
+
+router.post('/switch-branch', authenticate, asyncHandler(async (req, res) => {
+  const { branchId } = req.body;
+  if (!branchId) return res.status(400).json({ error: 'branchId is required' });
+
+  const [branch] = await pool.query(
+    'SELECT id, name FROM branches WHERE id = ? AND business_id = ? AND is_active = TRUE',
+    [branchId, req.user.businessId]
+  );
+  if (branch.length === 0) {
+    return res.status(404).json({ error: 'Branch not found' });
+  }
+
+  await pool.query('UPDATE users SET branch_id = ? WHERE id = ?', [branchId, req.user.id]);
+
+  const token = jwt.sign(
+    {
+      id: req.user.id,
+      email: req.user.email,
+      role: req.user.role,
+      businessId: req.user.businessId,
+      branchId: parseInt(branchId),
+      plan: req.user.plan,
+      planFeatures: req.user.planFeatures,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+  );
+
+  res.json({ token, branchId: parseInt(branchId), branchName: branch[0].name });
 }));
 
 export default router;

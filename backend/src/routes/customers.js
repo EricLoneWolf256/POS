@@ -30,15 +30,15 @@ router.get('/:id', authenticate, asyncHandler(async (req, res) => {
 
   const [purchases] = await pool.query(`
     SELECT s.id, s.sale_number, s.total_amount, s.created_at, s.payment_method
-    FROM sales s WHERE s.customer_id = ? AND s.status = 'completed'
+    FROM sales s WHERE s.customer_id = ? AND s.business_id = ? AND s.status = 'completed'
     ORDER BY s.created_at DESC LIMIT 20
-  `, [req.params.id]);
+  `, [req.params.id, req.user.businessId]);
 
   const [stats] = await pool.query(`
     SELECT COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_spent,
            COALESCE(AVG(total_amount), 0) as avg_order
-    FROM sales WHERE customer_id = ? AND status = 'completed'
-  `, [req.params.id]);
+    FROM sales WHERE customer_id = ? AND business_id = ? AND status = 'completed'
+  `, [req.params.id, req.user.businessId]);
 
   res.json({ ...customers[0], purchases, stats: stats[0] });
 }));

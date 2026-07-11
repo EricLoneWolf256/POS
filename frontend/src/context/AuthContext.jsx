@@ -51,8 +51,19 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const switchBranch = async (branchId) => {
+    const res = await api.post('/auth/switch-branch', { branchId });
+    localStorage.setItem('venderra_token', res.data.token);
+    setUser(prev => ({
+      ...prev,
+      branchId: res.data.branchId,
+      branchName: res.data.branchName,
+    }));
+    return res.data;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, isOnline }}>
+    <AuthContext.Provider value={{ user, login, logout, switchBranch, loading, isOnline }}>
       {children}
     </AuthContext.Provider>
   );

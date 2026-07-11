@@ -1,6 +1,6 @@
 import express from 'express';
 import pool from '../config/database.js';
-import { authenticate, authorize } from '../middleware/auth.js';
+import { authenticate, authorize, validateBranchOwnership } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/helpers.js';
 
 const router = express.Router();
@@ -109,7 +109,27 @@ router.get('/movements', authenticate, asyncHandler(async (req, res) => {
 }));
 
 router.post('/transfer', authenticate, authorize('owner', 'admin', 'manager'), asyncHandler(async (req, res) => {
-  const { fromBranchId, toBranchId, items, notes } = req.body;
+  const { fromBranchId, toBranchId, productId, quantity, notes } = req.body;
+
+  if (!fromBranchId || !toBranchId || !productId || !quantity) {
+    return res.status(400).json({ error: 'fromBranchId, toBranchId, productId, and quantity are required' });
+  }
+
+  if (fromBranchId === toBranchId) {
+    return res.status(400).json({ error: 'Source and destination branches must be different' });
+  }
+
+  if (quantity <= 0) {
+    return res.status(400).json({ error: 'Quantity must be greater than zero' });
+  }
+
+  const fromValid = await validateBranchOwnership(fromBranchId, req.user.businessId);
+  const toValid = await validateBranchOwnership(toBranchId, req.user.businessId);
+  if (!fromValid || !toValid) {
+    return res.status(403).json({ error: 'One or both branches do not belong to your business' });
+  }
+
+  const items = [{ productId: parseInt(productId), variationId: null, quantity: parseFloat(quantity) }];
   const conn = await pool.getConnection();
 
   try {
