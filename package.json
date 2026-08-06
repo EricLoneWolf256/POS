@@ -10,7 +10,8 @@
     "dev:frontend": "cd frontend && npm run dev",
     "build": "cd frontend && npm run build",
     "db:setup": "cd backend && npm run db:setup",
-    "db:seed": "cd backend && npm run db:seed"
+    "db:seed": "cd backend && npm run db:seed",
+    "db:cleanup": "cd backend && npm run db:cleanup"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

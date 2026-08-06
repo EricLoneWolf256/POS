@@ -92,7 +92,7 @@ npm run dev
 | admin@venderra.ug  | admin123  | Owner   |
 | manager@venderra.ug| admin123  | Manager |
 | cashier@venderra.ug| admin123  | Cashier |
-
+admin@mybusiness.com
 ## Project Structure
 
 ```

@@ -10,12 +10,12 @@ const roleColors = {
   owner: 'bg-purple-50 text-purple-600 ring-1 ring-purple-100/50',
   admin: 'bg-blue-50 text-blue-600 ring-1 ring-blue-100/50',
   manager: 'bg-amber-50 text-amber-600 ring-1 ring-amber-100/50',
-  cashier: 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/50',
+  cashier: 'bg-amber-50 text-amber-600 ring-1 ring-amber-100/50',
   field_sales: 'bg-cyan-50 text-cyan-600 ring-1 ring-cyan-100/50',
   viewer: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200/50',
 };
 
-const inputClass = "w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200";
+const inputClass = "w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200";
 
 function formatCurrency(n) {
   return new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', minimumFractionDigits: 0 }).format(n || 0);
@@ -151,17 +151,19 @@ export default function Employees() {
     <div className="animate-fade-in">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-slate-800">Employee Management</h1>
-        <button onClick={openAdd} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:shadow-xl hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]">
-          <Plus size={16} /> Add Employee
-        </button>
+        {['owner', 'admin'].includes(user?.role) && (
+          <button onClick={openAdd} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:shadow-xl hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]">
+            <Plus size={16} /> Add Employee
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
           { label: 'Total Employees', value: employees.length, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Active', value: activeCount, icon: UserCheck, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { label: 'Active', value: activeCount, icon: UserCheck, color: 'text-amber-600', bg: 'bg-amber-50' },
           { label: 'Clocked In Today', value: clockedIn, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
-          { label: "Today's Revenue", value: formatCurrency(todayRevenue), icon: DollarSign, color: 'text-teal-600', bg: 'bg-teal-50' },
+          { label: "Today's Revenue", value: formatCurrency(todayRevenue), icon: DollarSign, color: 'text-orange-600', bg: 'bg-orange-50' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm shadow-slate-200/50">
             <div className="flex items-center gap-3">
@@ -190,7 +192,7 @@ export default function Employees() {
           <div className="p-4 border-b border-slate-100">
             <div className="relative">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all" placeholder="Search employees by name or email..." value={search} onChange={e => setSearch(e.target.value)} />
+              <input className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all" placeholder="Search employees by name or email..." value={search} onChange={e => setSearch(e.target.value)} />
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -211,7 +213,7 @@ export default function Employees() {
                   <tr key={emp.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
                     <td className="py-3.5 px-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                           {emp.first_name?.[0]}{emp.last_name?.[0]}
                         </div>
                         <div>
@@ -234,8 +236,8 @@ export default function Employees() {
                     <td className="py-3.5 px-5 text-sm font-semibold text-slate-800">{formatCurrency(emp.week_revenue)}</td>
                     <td className="py-3.5 px-5">
                       {emp.currently_clocked_in ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-semibold ring-1 ring-emerald-100/50">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-xs font-semibold ring-1 ring-amber-100/50">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                           On Shift
                         </span>
                       ) : emp.is_active ? (
@@ -246,19 +248,23 @@ export default function Employees() {
                     </td>
                     <td className="py-3.5 px-5">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => openPerformance(emp)} className="p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-all" title="Performance">
+                        <button onClick={() => openPerformance(emp)} className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all" title="Performance">
                           <TrendingUp size={15} />
                         </button>
-                        <button onClick={() => openPasswordReset(emp)} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all" title="Reset Password">
-                          <Key size={15} />
-                        </button>
-                        <button onClick={() => openEdit(emp)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Edit">
-                          <Edit2 size={15} />
-                        </button>
-                        {emp.role !== 'owner' && (
-                          <button onClick={() => handleToggleActive(emp)} className={`p-2 rounded-lg transition-all ${emp.is_active ? 'text-slate-400 hover:text-red-600 hover:bg-red-50' : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'}`} title={emp.is_active ? 'Deactivate' : 'Activate'}>
-                            {emp.is_active ? <UserX size={15} /> : <UserCheck size={15} />}
-                          </button>
+                        {['owner', 'admin'].includes(user?.role) && (
+                          <>
+                            <button onClick={() => openPasswordReset(emp)} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all" title="Reset Password">
+                              <Key size={15} />
+                            </button>
+                            <button onClick={() => openEdit(emp)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Edit">
+                              <Edit2 size={15} />
+                            </button>
+                            {emp.role !== 'owner' && (
+                              <button onClick={() => handleToggleActive(emp)} className={`p-2 rounded-lg transition-all ${emp.is_active ? 'text-slate-400 hover:text-red-600 hover:bg-red-50' : 'text-slate-400 hover:text-amber-600 hover:bg-amber-50'}`} title={emp.is_active ? 'Deactivate' : 'Activate'}>
+                                {emp.is_active ? <UserX size={15} /> : <UserCheck size={15} />}
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     </td>
@@ -326,7 +332,7 @@ export default function Employees() {
               </div>
               <div className="flex gap-3 justify-end">
                 <button type="button" className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-200" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]">
+                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]">
                   {editing ? 'Update Employee' : 'Create Employee'}
                 </button>
               </div>
@@ -364,7 +370,7 @@ export default function Employees() {
           <div className="bg-white rounded-2xl p-8 w-[90%] max-w-[600px] max-h-[85vh] overflow-y-auto shadow-2xl shadow-slate-900/10 animate-modal-enter" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center text-white text-sm font-bold">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white text-sm font-bold">
                   {showPerformance.first_name?.[0]}{showPerformance.last_name?.[0]}
                 </div>
                 <div>
@@ -391,7 +397,7 @@ export default function Employees() {
                     <div className="text-[11px] text-slate-400 font-medium uppercase">Sales</div>
                   </div>
                   <div className="bg-slate-50/80 rounded-xl p-3 text-center">
-                    <div className="text-xl font-bold text-teal-600">{formatCurrency(perfData.salesStats.total_revenue)}</div>
+                    <div className="text-xl font-bold text-orange-600">{formatCurrency(perfData.salesStats.total_revenue)}</div>
                     <div className="text-[11px] text-slate-400 font-medium uppercase">Revenue</div>
                   </div>
                   <div className="bg-slate-50/80 rounded-xl p-3 text-center">
@@ -496,8 +502,8 @@ function AttendanceTab() {
         <div className="flex items-center gap-4">
           {amIClockedIn ? (
             <>
-              <span className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-600 rounded-xl text-sm font-semibold ring-1 ring-emerald-200/50">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-50 text-amber-600 rounded-xl text-sm font-semibold ring-1 ring-amber-200/50">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                 You are on shift
               </span>
               <button onClick={handleClockOut} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-xl font-semibold text-sm shadow-lg shadow-red-500/25 hover:from-red-600 hover:to-rose-600 transition-all active:scale-[0.98]">
@@ -509,7 +515,7 @@ function AttendanceTab() {
               <span className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-500 rounded-xl text-sm font-semibold">
                 <Clock size={16} /> Not on shift
               </span>
-              <button onClick={handleClockIn} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:from-teal-700 hover:to-emerald-700 transition-all active:scale-[0.98]">
+              <button onClick={handleClockIn} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:from-orange-700 hover:to-amber-700 transition-all active:scale-[0.98]">
                 <LogIn size={16} /> Clock In
               </button>
             </>
@@ -543,8 +549,8 @@ function AttendanceTab() {
                     {r.clock_out ? (
                       <span className="inline-flex px-2.5 py-1 bg-slate-100 text-slate-500 rounded-lg text-xs font-semibold">Complete</span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-semibold ring-1 ring-emerald-100/50">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-xs font-semibold ring-1 ring-amber-100/50">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                         On Shift
                       </span>
                     )}

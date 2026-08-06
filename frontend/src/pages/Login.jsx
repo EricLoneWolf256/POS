@@ -30,14 +30,14 @@ export default function Login() {
       {/* Left panel — branding */}
       <div className="hidden lg:flex flex-1 relative bg-[#0f172a] overflow-hidden">
         {/* Ambient gradients */}
-        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-teal-500/[0.07] blur-[120px]" />
-        <div className="absolute bottom-[-15%] left-[-5%] w-[500px] h-[500px] rounded-full bg-emerald-400/[0.05] blur-[100px]" />
+        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-orange-500/[0.07] blur-[120px]" />
+        <div className="absolute bottom-[-15%] left-[-5%] w-[500px] h-[500px] rounded-full bg-amber-400/[0.05] blur-[100px]" />
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-between w-full p-14 xl:p-16">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-400 to-emerald-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-amber-400 flex items-center justify-center">
               <span className="text-white font-extrabold text-lg">V</span>
             </div>
             <span className="text-white font-bold text-xl tracking-tight">Venderra</span>
@@ -47,7 +47,7 @@ export default function Login() {
           <div className="max-w-lg">
             <h1 className="text-[42px] xl:text-[48px] font-bold text-white leading-[1.1] tracking-tight mb-5">
               Run your business<br />
-              <span className="bg-gradient-to-r from-teal-300 to-emerald-300 bg-clip-text text-transparent">with confidence</span>
+              <span className="bg-gradient-to-r from-orange-300 to-amber-300 bg-clip-text text-transparent">with confidence</span>
             </h1>
             <p className="text-[15px] text-white/45 leading-relaxed mb-10 max-w-md">
               The complete POS platform for retail, supermarkets, and pharmacies across Uganda. Sell offline, manage stock, track everything.
@@ -63,8 +63,8 @@ export default function Login() {
                 'SMS & WhatsApp daily summaries',
               ].map((f) => (
                 <div key={f} className="flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full bg-teal-400/10 flex items-center justify-center shrink-0">
-                    <Check size={11} className="text-teal-400" strokeWidth={3} />
+                  <div className="w-5 h-5 rounded-full bg-orange-400/10 flex items-center justify-center shrink-0">
+                    <Check size={11} className="text-orange-400" strokeWidth={3} />
                   </div>
                   <span className="text-sm text-white/50">{f}</span>
                 </div>
@@ -82,7 +82,7 @@ export default function Login() {
         <div className="w-full max-w-[400px]">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-3 mb-10">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-md shadow-teal-500/20">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-md shadow-orange-500/20">
               <span className="text-white font-extrabold text-base">V</span>
             </div>
             <span className="font-bold text-lg text-slate-800 tracking-tight">Venderra</span>
@@ -109,7 +109,7 @@ export default function Login() {
                 <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
                 <input
                   type="email"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10 transition-all duration-200"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-500/10 transition-all duration-200"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required
@@ -120,7 +120,7 @@ export default function Login() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-[13px] font-semibold text-slate-600">Password</label>
-                <Link to="/forgot-password" className="text-[12px] font-semibold text-teal-600 hover:text-teal-700 transition-colors">
+                <Link to="/forgot-password" className="text-[12px] font-semibold text-orange-600 hover:text-orange-700 transition-colors">
                   Forgot password?
                 </Link>
               </div>
@@ -128,7 +128,7 @@ export default function Login() {
                 <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
                 <input
                   type="password"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10 transition-all duration-200"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-500/10 transition-all duration-200"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
@@ -139,7 +139,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3 mt-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-xl font-semibold text-[15px] shadow-lg shadow-teal-500/20 hover:shadow-xl hover:shadow-teal-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]"
+              className="w-full flex items-center justify-center gap-2 py-3 mt-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white rounded-xl font-semibold text-[15px] shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]"
             >
               {loading ? (
                 <Loader size={18} className="animate-spin" />
@@ -155,7 +155,7 @@ export default function Login() {
           {/* Register link */}
           <p className="text-center text-sm text-slate-400 mt-6">
             New to Venderra?{' '}
-            <Link to="/register" className="font-semibold text-teal-600 hover:text-teal-700 transition-colors">
+            <Link to="/register" className="font-semibold text-orange-600 hover:text-orange-700 transition-colors">
               Create an account
             </Link>
           </p>

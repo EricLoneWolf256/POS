@@ -67,7 +67,7 @@ export default function Manufacturing() {
     setBomForm({ ...bomForm, items });
   };
 
-  const inputClass = "w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200";
+  const inputClass = "w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200";
 
   const actionButtons = {
     materials: { label: 'Add Material', onClick: () => setShowMaterialModal(true) },
@@ -82,7 +82,7 @@ export default function Manufacturing() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-800">Production / Manufacturing</h1>
           <p className="text-sm text-slate-400 mt-1">Manage raw materials, BOM, and production orders</p>
         </div>
-        <button className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:shadow-xl hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]" onClick={actionButtons[tab].onClick}>
+        <button className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:shadow-xl hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]" onClick={actionButtons[tab].onClick}>
           <Plus size={18} /> {actionButtons[tab].label}
         </button>
       </div>
@@ -147,7 +147,7 @@ export default function Manufacturing() {
                     <td className="py-3.5 px-5 text-sm font-medium text-slate-700">{b.name}</td>
                     <td className="py-3.5 px-5 text-sm text-slate-600">{b.product_name}</td>
                     <td className="py-3.5 px-5 text-sm font-semibold text-slate-800">{b.output_quantity}</td>
-                    <td className="py-3.5 px-5"><span className="inline-flex px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-semibold ring-1 ring-emerald-100/50">Active</span></td>
+                    <td className="py-3.5 px-5"><span className="inline-flex px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-xs font-semibold ring-1 ring-amber-100/50">Active</span></td>
                   </tr>
                 ))}
                 {boms.length === 0 && <tr><td colSpan={4} className="py-16 text-center"><Factory size={40} className="mx-auto mb-3 text-slate-200" /><p className="text-sm font-medium text-slate-400">No BOMs configured yet</p></td></tr>}
@@ -178,7 +178,7 @@ export default function Manufacturing() {
                     <td className="py-3.5 px-5 text-sm font-semibold text-slate-800">{o.quantity}</td>
                     <td className="py-3.5 px-5 text-sm font-semibold text-slate-800">UGX {o.total_cost?.toLocaleString()}</td>
                     <td className="py-3.5 px-5 text-sm text-slate-600">{o.branch_name}</td>
-                    <td className="py-3.5 px-5"><span className="inline-flex px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-semibold ring-1 ring-emerald-100/50">{o.status}</span></td>
+                    <td className="py-3.5 px-5"><span className="inline-flex px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-xs font-semibold ring-1 ring-amber-100/50">{o.status}</span></td>
                     <td className="py-3.5 px-5 text-sm text-slate-400">{new Date(o.created_at).toLocaleDateString('en-UG')}</td>
                   </tr>
                 ))}
@@ -217,7 +217,7 @@ export default function Manufacturing() {
               </div>
               <div className="flex gap-3 justify-end">
                 <button type="button" className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-200" onClick={() => setShowMaterialModal(false)}>Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]">Save</button>
+                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]">Save</button>
               </div>
             </form>
           </div>
@@ -252,16 +252,16 @@ export default function Manufacturing() {
               <div className="mb-4">
                 <div className="flex justify-between items-center mb-3">
                   <label className="text-[13px] font-semibold text-slate-600">Materials Required</label>
-                  <button type="button" className="text-sm text-teal-600 font-semibold hover:text-teal-700 transition-colors" onClick={addBomItem}>+ Add Material</button>
+                  <button type="button" className="text-sm text-orange-600 font-semibold hover:text-orange-700 transition-colors" onClick={addBomItem}>+ Add Material</button>
                 </div>
                 <div className="space-y-2">
                   {bomForm.items.map((item, idx) => (
                     <div key={idx} className="flex gap-2">
-                      <select className="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10" value={item.materialId} onChange={e => updateBomItem(idx, 'materialId', e.target.value)} required>
+                      <select className="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10" value={item.materialId} onChange={e => updateBomItem(idx, 'materialId', e.target.value)} required>
                         <option value="">Select material</option>
                         {materials.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                       </select>
-                      <input className="w-24 px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10" type="number" placeholder="Qty" value={item.quantity} onChange={e => updateBomItem(idx, 'quantity', e.target.value)} required />
+                      <input className="w-24 px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10" type="number" placeholder="Qty" value={item.quantity} onChange={e => updateBomItem(idx, 'quantity', e.target.value)} required />
                       {bomForm.items.length > 1 && (
                         <button type="button" className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" onClick={() => removeBomItem(idx)}><X size={16} /></button>
                       )}
@@ -271,7 +271,7 @@ export default function Manufacturing() {
               </div>
               <div className="flex gap-3 justify-end mt-6">
                 <button type="button" className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-200" onClick={() => setShowBomModal(false)}>Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]">Create BOM</button>
+                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]">Create BOM</button>
               </div>
             </form>
           </div>
@@ -308,7 +308,7 @@ export default function Manufacturing() {
               </div>
               <div className="flex gap-3 justify-end">
                 <button type="button" className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-200" onClick={() => setShowOrderModal(false)}>Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]">Start Production</button>
+                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]">Start Production</button>
               </div>
             </form>
           </div>

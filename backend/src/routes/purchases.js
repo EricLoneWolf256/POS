@@ -2,6 +2,16 @@ import express from 'express';
 import pool from '../config/database.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { asyncHandler, generatePurchaseNumber } from '../utils/helpers.js';
+import { auditLog } from '../middleware/audit.js';
+import {
+  handleValidation,
+  validateRequiredString,
+  validateOptionalString,
+  validateOptionalPositiveNumber,
+  validateIdParam,
+  validatePositiveNumber,
+} from '../middleware/validation.js';
+import { body } from 'express-validator';
 
 const router = express.Router();
 
@@ -13,12 +23,22 @@ router.get('/suppliers', authenticate, asyncHandler(async (req, res) => {
   res.json(suppliers);
 }));
 
-router.post('/suppliers', authenticate, authorize('owner', 'admin', 'manager'), asyncHandler(async (req, res) => {
+router.post('/suppliers', authenticate, authorize('owner', 'admin', 'manager'), [
+  validateRequiredString('name', 1, 255),
+  validateOptionalString('contactPerson', 255),
+  body('email').optional({ values: 'null' }).trim().isEmail().withMessage('Must be a valid email').normalizeEmail(),
+  validateOptionalString('phone', 50),
+  validateOptionalString('address', 500),
+  handleValidation,
+], asyncHandler(async (req, res) => {
   const { name, contactPerson, email, phone, address } = req.body;
   const [result] = await pool.query(`
     INSERT INTO suppliers (business_id, name, contact_person, email, phone, address)
     VALUES (?, ?, ?, ?, ?, ?)
-  `, [req.user.businessId, name, contactPerson, email, phone, address]);
+  `, [req.user.businessId, name, contactPerson || null, email || null, phone || null, address || null]);
+
+  auditLog(req.user.businessId, req.user.id, 'create', 'supplier', result.insertId, { name, ip: req.ip });
+
   res.status(201).json({ id: result.insertId, name });
 }));
 
@@ -33,7 +53,17 @@ router.get('/purchases', authenticate, asyncHandler(async (req, res) => {
   res.json(purchases);
 }));
 
-router.post('/purchases', authenticate, authorize('owner', 'admin', 'manager'), asyncHandler(async (req, res) => {
+router.post('/purchases', authenticate, authorize('owner', 'admin', 'manager'), [
+  body('items').isArray({ min: 1 }).withMessage('Purchase must have at least one item'),
+  body('items.*.productId').isInt({ min: 1 }).withMessage('Each item must have a valid productId'),
+  body('items.*.quantity').isFloat({ min: 0.01 }).withMessage('Each item quantity must be positive'),
+  body('items.*.unitCost').isFloat({ min: 0 }).withMessage('Each item unitCost must be non-negative'),
+  body('supplierId').optional({ values: 'null' }).isInt({ min: 1 }),
+  validateOptionalPositiveNumber('amountPaid'),
+  validateOptionalString('notes', 500),
+  body('branchId').optional({ values: 'null' }).isInt({ min: 1 }),
+  handleValidation,
+], asyncHandler(async (req, res) => {
   const { items, supplierId, amountPaid, notes, branchId } = req.body;
   const purchaseBranchId = branchId || req.user.branchId;
   const conn = await pool.getConnection();
@@ -50,7 +80,7 @@ router.post('/purchases', authenticate, authorize('owner', 'admin', 'manager'), 
     const [result] = await conn.query(`
       INSERT INTO purchases (business_id, branch_id, purchase_number, supplier_id, subtotal, total_amount, amount_paid, notes, created_by)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [req.user.businessId, purchaseBranchId, purchaseNumber, supplierId, subtotal, subtotal, amountPaid || subtotal, notes, req.user.id]);
+    `, [req.user.businessId, purchaseBranchId, purchaseNumber, supplierId || null, subtotal, subtotal, amountPaid || subtotal, notes || null, req.user.id]);
 
     const purchaseId = result.insertId;
 
@@ -58,7 +88,7 @@ router.post('/purchases', authenticate, authorize('owner', 'admin', 'manager'), 
       await conn.query(`
         INSERT INTO purchase_items (purchase_id, product_id, variation_id, quantity, unit_cost, total)
         VALUES (?, ?, ?, ?, ?, ?)
-      `, [purchaseId, item.productId, item.variationId, item.quantity, item.unitCost, item.unitCost * item.quantity]);
+      `, [purchaseId, item.productId, item.variationId || null, item.quantity, item.unitCost, item.unitCost * item.quantity]);
 
       const [existing] = await conn.query(
         'SELECT id FROM stock WHERE branch_id = ? AND product_id = ? AND (variation_id = ? OR (variation_id IS NULL AND ? IS NULL))',
@@ -69,18 +99,21 @@ router.post('/purchases', authenticate, authorize('owner', 'admin', 'manager'), 
         await conn.query('UPDATE stock SET quantity = quantity + ? WHERE id = ?', [item.quantity, existing[0].id]);
       } else {
         await conn.query('INSERT INTO stock (branch_id, product_id, variation_id, quantity) VALUES (?, ?, ?, ?)',
-          [purchaseBranchId, item.productId, item.variationId, item.quantity]);
+          [purchaseBranchId, item.productId, item.variationId || null, item.quantity]);
       }
 
       await conn.query(`
         INSERT INTO stock_movements (business_id, branch_id, product_id, variation_id, movement_type, quantity, reference_type, reference_id, created_by)
         VALUES (?, ?, ?, ?, 'purchase', ?, 'purchase', ?, ?)
-      `, [req.user.businessId, purchaseBranchId, item.productId, item.variationId, item.quantity, purchaseId, req.user.id]);
+      `, [req.user.businessId, purchaseBranchId, item.productId, item.variationId || null, item.quantity, purchaseId, req.user.id]);
 
       await conn.query('UPDATE products SET cost_price = ? WHERE id = ?', [item.unitCost, item.productId]);
     }
 
     await conn.commit();
+
+    auditLog(req.user.businessId, req.user.id, 'create', 'purchase', purchaseId, { purchaseNumber, subtotal, ip: req.ip });
+
     res.status(201).json({ id: purchaseId, purchaseNumber, totalAmount: subtotal });
   } catch (err) {
     await conn.rollback();
@@ -108,12 +141,22 @@ router.get('/expenses', authenticate, asyncHandler(async (req, res) => {
   res.json(expenses);
 }));
 
-router.post('/expenses', authenticate, authorize('owner', 'admin', 'manager'), asyncHandler(async (req, res) => {
+router.post('/expenses', authenticate, authorize('owner', 'admin', 'manager'), [
+  validateRequiredString('category', 1, 100),
+  validateOptionalString('description', 500),
+  validatePositiveNumber('amount'),
+  validateOptionalString('paymentMethod', 50),
+  validateOptionalString('expenseDate', 10),
+  body('branchId').optional({ values: 'null' }).isInt({ min: 1 }),
+  handleValidation,
+], asyncHandler(async (req, res) => {
   const { category, description, amount, paymentMethod, expenseDate, branchId } = req.body;
   const [result] = await pool.query(`
     INSERT INTO expenses (business_id, branch_id, category, description, amount, payment_method, expense_date, created_by)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `, [req.user.businessId, branchId || req.user.branchId, category, description, amount, paymentMethod, expenseDate || new Date().toISOString().split('T')[0], req.user.id]);
+  `, [req.user.businessId, branchId || req.user.branchId, category, description || null, amount, paymentMethod || null, expenseDate || new Date().toISOString().split('T')[0], req.user.id]);
+
+  auditLog(req.user.businessId, req.user.id, 'create', 'expense', result.insertId, { category, amount, ip: req.ip });
 
   res.status(201).json({ id: result.insertId, category, amount });
 }));

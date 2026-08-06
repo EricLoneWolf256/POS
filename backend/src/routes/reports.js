@@ -83,20 +83,24 @@ router.get('/inventory-valuation', authenticate, asyncHandler(async (req, res) =
 
 router.get('/staff-performance', authenticate, requirePlan('staff_reports'), asyncHandler(async (req, res) => {
   const { startDate, endDate } = req.query;
-  let query = `
+  const params = [];
+  let joinConditions = '';
+
+  if (startDate) { joinConditions += ' AND DATE(s.created_at) >= ?'; params.push(startDate); }
+  if (endDate) { joinConditions += ' AND DATE(s.created_at) <= ?'; params.push(endDate); }
+
+  const query = `
     SELECT u.id, u.first_name, u.last_name, u.role,
-           COUNT(s.id) as total_sales, SUM(s.total_amount) as total_revenue,
-           AVG(s.total_amount) as avg_sale_value
+           COUNT(s.id) as total_sales, COALESCE(SUM(s.total_amount), 0) as total_revenue,
+           COALESCE(AVG(s.total_amount), 0) as avg_sale_value
     FROM users u
-    LEFT JOIN sales s ON s.cashier_id = u.id AND s.status = 'completed'
+    LEFT JOIN sales s ON s.cashier_id = u.id AND s.status = 'completed'${joinConditions}
     WHERE u.business_id = ? AND u.is_active = TRUE
+    GROUP BY u.id
+    ORDER BY total_revenue DESC
   `;
-  const params = [req.user.businessId];
+  params.push(req.user.businessId);
 
-  if (startDate) { query += ' AND DATE(s.created_at) >= ?'; params.push(startDate); }
-  if (endDate) { query += ' AND DATE(s.created_at) <= ?'; params.push(endDate); }
-
-  query += ' GROUP BY u.id ORDER BY total_revenue DESC';
   const [staff] = await pool.query(query, params);
   res.json(staff);
 }));

@@ -183,21 +183,30 @@ router.get('/purchases', authenticate, asyncHandler(async (req, res) => {
 
 router.get('/profit-loss', authenticate, asyncHandler(async (req, res) => {
   const { format, from, to } = req.query;
+
+  const salesParams = [req.user.businessId];
+  if (from) salesParams.push(from);
+  if (to) salesParams.push(to);
+
   const [sales] = await pool.query(`
-    SELECT SUM(s.total_amount) as total_revenue, SUM(si.total - si.discount) as total_cogs
+    SELECT SUM(s.total_amount) as total_revenue, SUM(si.quantity * p.cost_price) as total_cogs
     FROM sales s
     JOIN sale_items si ON si.sale_id = s.id
     JOIN products p ON si.product_id = p.id
     WHERE s.business_id = ? AND s.status = 'completed'
     ${from ? 'AND s.created_at >= ?' : ''} ${to ? 'AND s.created_at <= ?' : ''}
-  `, [req.user.businessId, from, to].filter(Boolean));
+  `, salesParams);
+
+  const expenseParams = [req.user.businessId];
+  if (from) expenseParams.push(from);
+  if (to) expenseParams.push(to);
 
   const [expenses] = await pool.query(`
     SELECT category, SUM(amount) as total FROM expenses
     WHERE business_id = ?
-    ${from ? 'AND created_at >= ?' : ''} ${to ? 'AND created_at <= ?' : ''}
+    ${from ? 'AND expense_date >= ?' : ''} ${to ? 'AND expense_date <= ?' : ''}
     GROUP BY category
-  `, [req.user.businessId, from, to].filter(Boolean));
+  `, expenseParams);
 
   const revenue = Number(sales[0]?.total_revenue || 0);
   const cogs = Number(sales[0]?.total_cogs || 0);

@@ -47,10 +47,9 @@ CREATE TABLE IF NOT EXISTS branches (
   is_main BOOLEAN DEFAULT FALSE,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE
+  FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
+  INDEX idx_branches_business (business_id)
 );
-
--- Users & Staff
 CREATE TABLE IF NOT EXISTS users (
   id INT PRIMARY KEY AUTO_INCREMENT,
   business_id INT NOT NULL,
@@ -60,7 +59,7 @@ CREATE TABLE IF NOT EXISTS users (
   first_name VARCHAR(100) NOT NULL,
   last_name VARCHAR(100) NOT NULL,
   phone VARCHAR(50),
-  role ENUM('owner', 'admin', 'manager', 'cashier', 'field_sales', 'viewer') DEFAULT 'cashier',
+  role ENUM('super_admin', 'owner', 'admin', 'manager', 'cashier', 'field_sales', 'viewer') DEFAULT 'cashier',
   permissions JSON,
   is_active BOOLEAN DEFAULT TRUE,
   last_login TIMESTAMP NULL,
@@ -68,10 +67,11 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY unique_email_business (email, business_id),
   FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
+  INDEX idx_users_email (email),
+  INDEX idx_users_business_active (business_id, is_active),
+  INDEX idx_users_branch (branch_id),
   FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
 );
-
--- Product Categories
 CREATE TABLE IF NOT EXISTS categories (
   id INT PRIMARY KEY AUTO_INCREMENT,
   business_id INT NOT NULL,
@@ -80,10 +80,9 @@ CREATE TABLE IF NOT EXISTS categories (
   parent_id INT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
-  FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE SET NULL
+  FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE SET NULL,
+  INDEX idx_categories_business (business_id)
 );
-
--- Products
 CREATE TABLE IF NOT EXISTS products (
   id INT PRIMARY KEY AUTO_INCREMENT,
   business_id INT NOT NULL,
@@ -106,7 +105,9 @@ CREATE TABLE IF NOT EXISTS products (
   FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
   FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
   INDEX idx_barcode (barcode),
-  INDEX idx_sku (sku)
+  INDEX idx_sku (sku),
+  INDEX idx_products_business_active (business_id, is_active),
+  INDEX idx_products_category (category_id)
 );
 
 -- Product Variations (sizes, colors, packaging)
@@ -121,10 +122,9 @@ CREATE TABLE IF NOT EXISTS product_variations (
   attributes JSON,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+  INDEX idx_variations_product (product_id)
 );
-
--- Stock per branch
 CREATE TABLE IF NOT EXISTS stock (
   id INT PRIMARY KEY AUTO_INCREMENT,
   branch_id INT NOT NULL,
@@ -136,7 +136,8 @@ CREATE TABLE IF NOT EXISTS stock (
   UNIQUE KEY unique_stock (branch_id, product_id, variation_id),
   FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE CASCADE,
   FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-  FOREIGN KEY (variation_id) REFERENCES product_variations(id) ON DELETE CASCADE
+  FOREIGN KEY (variation_id) REFERENCES product_variations(id) ON DELETE CASCADE,
+  INDEX idx_stock_branch (branch_id)
 );
 
 -- Stock Movement History / Audit Trail
@@ -156,7 +157,12 @@ CREATE TABLE IF NOT EXISTS stock_movements (
   FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
   FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE CASCADE,
   FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  INDEX idx_sm_business_branch (business_id, branch_id),
+  INDEX idx_sm_product (product_id),
+  INDEX idx_sm_date (created_at),
+  INDEX idx_sm_created_by (created_by),
+  INDEX idx_sm_business_product_date (business_id, product_id, created_at)
 );
 
 -- Stock Transfers between branches
@@ -173,7 +179,8 @@ CREATE TABLE IF NOT EXISTS stock_transfers (
   FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
   FOREIGN KEY (from_branch_id) REFERENCES branches(id),
   FOREIGN KEY (to_branch_id) REFERENCES branches(id),
-  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  INDEX idx_transfers_business (business_id)
 );
 
 CREATE TABLE IF NOT EXISTS stock_transfer_items (
@@ -183,10 +190,9 @@ CREATE TABLE IF NOT EXISTS stock_transfer_items (
   variation_id INT,
   quantity DECIMAL(12,3) NOT NULL,
   FOREIGN KEY (transfer_id) REFERENCES stock_transfers(id) ON DELETE CASCADE,
-  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+  INDEX idx_transfer_items_transfer (transfer_id)
 );
-
--- Suppliers
 CREATE TABLE IF NOT EXISTS suppliers (
   id INT PRIMARY KEY AUTO_INCREMENT,
   business_id INT NOT NULL,
@@ -198,7 +204,8 @@ CREATE TABLE IF NOT EXISTS suppliers (
   balance DECIMAL(12,2) DEFAULT 0,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE
+  FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
+  INDEX idx_suppliers_business (business_id)
 );
 
 -- Customers
@@ -216,10 +223,10 @@ CREATE TABLE IF NOT EXISTS customers (
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE
+  FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
+  INDEX idx_cust_business (business_id),
+  INDEX idx_cust_phone (phone)
 );
-
--- Sales
 CREATE TABLE IF NOT EXISTS sales (
   id INT PRIMARY KEY AUTO_INCREMENT,
   business_id INT NOT NULL,
@@ -246,7 +253,14 @@ CREATE TABLE IF NOT EXISTS sales (
   FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL,
   FOREIGN KEY (cashier_id) REFERENCES users(id),
   INDEX idx_sale_number (sale_number),
-  INDEX idx_created_at (created_at)
+  INDEX idx_created_at (created_at),
+  INDEX idx_business_date (business_id, created_at),
+  INDEX idx_branch_date (branch_id, created_at),
+  INDEX idx_sales_business_status (business_id, status),
+  INDEX idx_sales_cashier (cashier_id),
+  INDEX idx_sales_customer (customer_id),
+  INDEX idx_sales_offline_id (offline_id),
+  INDEX idx_sales_cashier_status_date (cashier_id, status, created_at)
 );
 
 CREATE TABLE IF NOT EXISTS sale_items (
@@ -261,10 +275,10 @@ CREATE TABLE IF NOT EXISTS sale_items (
   tax_amount DECIMAL(12,2) DEFAULT 0,
   total DECIMAL(12,2) NOT NULL,
   FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE,
-  FOREIGN KEY (product_id) REFERENCES products(id)
+  FOREIGN KEY (product_id) REFERENCES products(id),
+  INDEX idx_sale_items_sale (sale_id),
+  INDEX idx_sale_items_product (product_id)
 );
-
--- Purchases
 CREATE TABLE IF NOT EXISTS purchases (
   id INT PRIMARY KEY AUTO_INCREMENT,
   business_id INT NOT NULL,
@@ -294,10 +308,9 @@ CREATE TABLE IF NOT EXISTS purchase_items (
   unit_cost DECIMAL(12,2) NOT NULL,
   total DECIMAL(12,2) NOT NULL,
   FOREIGN KEY (purchase_id) REFERENCES purchases(id) ON DELETE CASCADE,
-  FOREIGN KEY (product_id) REFERENCES products(id)
+  FOREIGN KEY (product_id) REFERENCES products(id),
+  INDEX idx_purchase_items_purchase (purchase_id)
 );
-
--- Expenses
 CREATE TABLE IF NOT EXISTS expenses (
   id INT PRIMARY KEY AUTO_INCREMENT,
   business_id INT NOT NULL,
@@ -312,7 +325,9 @@ CREATE TABLE IF NOT EXISTS expenses (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
   FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL,
-  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  INDEX idx_exp_business_date (business_id, expense_date),
+  INDEX idx_expenses_business_category (business_id, category)
 );
 
 -- Quotations & Invoices (Premium+)
@@ -334,7 +349,8 @@ CREATE TABLE IF NOT EXISTS quotations (
   FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
   FOREIGN KEY (branch_id) REFERENCES branches(id),
   FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL,
-  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  INDEX idx_quotations_business (business_id, created_at)
 );
 
 CREATE TABLE IF NOT EXISTS quotation_items (
@@ -345,7 +361,8 @@ CREATE TABLE IF NOT EXISTS quotation_items (
   quantity DECIMAL(12,3) NOT NULL,
   unit_price DECIMAL(12,2) NOT NULL,
   total DECIMAL(12,2) NOT NULL,
-  FOREIGN KEY (quotation_id) REFERENCES quotations(id) ON DELETE CASCADE
+  FOREIGN KEY (quotation_id) REFERENCES quotations(id) ON DELETE CASCADE,
+  INDEX idx_quotation_items_quotation (quotation_id)
 );
 
 -- Manufacturing Module (Enterprise)
@@ -359,7 +376,8 @@ CREATE TABLE IF NOT EXISTS raw_materials (
   low_stock_threshold INT DEFAULT 10,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE
+  FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
+  INDEX idx_materials_business (business_id)
 );
 
 CREATE TABLE IF NOT EXISTS raw_material_stock (
@@ -382,7 +400,8 @@ CREATE TABLE IF NOT EXISTS bill_of_materials (
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
-  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+  INDEX idx_bom_business (business_id)
 );
 
 CREATE TABLE IF NOT EXISTS bom_items (
@@ -391,7 +410,8 @@ CREATE TABLE IF NOT EXISTS bom_items (
   material_id INT NOT NULL,
   quantity DECIMAL(12,3) NOT NULL,
   FOREIGN KEY (bom_id) REFERENCES bill_of_materials(id) ON DELETE CASCADE,
-  FOREIGN KEY (material_id) REFERENCES raw_materials(id) ON DELETE CASCADE
+  FOREIGN KEY (material_id) REFERENCES raw_materials(id) ON DELETE CASCADE,
+  INDEX idx_bom_items_bom (bom_id)
 );
 
 CREATE TABLE IF NOT EXISTS production_orders (
@@ -409,10 +429,9 @@ CREATE TABLE IF NOT EXISTS production_orders (
   FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
   FOREIGN KEY (branch_id) REFERENCES branches(id),
   FOREIGN KEY (bom_id) REFERENCES bill_of_materials(id),
-  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  INDEX idx_prod_orders_business (business_id)
 );
-
--- Field Sales Module (Enterprise)
 CREATE TABLE IF NOT EXISTS field_sales_trips (
   id INT PRIMARY KEY AUTO_INCREMENT,
   business_id INT NOT NULL,
@@ -426,7 +445,8 @@ CREATE TABLE IF NOT EXISTS field_sales_trips (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
   FOREIGN KEY (salesperson_id) REFERENCES users(id),
-  FOREIGN KEY (branch_id) REFERENCES branches(id)
+  FOREIGN KEY (branch_id) REFERENCES branches(id),
+  INDEX idx_trips_business (business_id)
 );
 
 CREATE TABLE IF NOT EXISTS field_stock_issues (
@@ -438,7 +458,8 @@ CREATE TABLE IF NOT EXISTS field_stock_issues (
   quantity_returned DECIMAL(12,3) DEFAULT 0,
   quantity_sold DECIMAL(12,3) DEFAULT 0,
   FOREIGN KEY (trip_id) REFERENCES field_sales_trips(id) ON DELETE CASCADE,
-  FOREIGN KEY (product_id) REFERENCES products(id)
+  FOREIGN KEY (product_id) REFERENCES products(id),
+  INDEX idx_field_issues_trip (trip_id)
 );
 
 CREATE TABLE IF NOT EXISTS field_expenses (
@@ -448,10 +469,9 @@ CREATE TABLE IF NOT EXISTS field_expenses (
   amount DECIMAL(12,2) NOT NULL,
   category VARCHAR(100),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (trip_id) REFERENCES field_sales_trips(id) ON DELETE CASCADE
+  FOREIGN KEY (trip_id) REFERENCES field_sales_trips(id) ON DELETE CASCADE,
+  INDEX idx_field_expenses_trip (trip_id)
 );
-
--- Offline Sync Queue
 CREATE TABLE IF NOT EXISTS sync_queue (
   id INT PRIMARY KEY AUTO_INCREMENT,
   business_id INT NOT NULL,
@@ -464,10 +484,9 @@ CREATE TABLE IF NOT EXISTS sync_queue (
   error_message TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   synced_at TIMESTAMP NULL,
-  FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE
+  FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
+  INDEX idx_sync_business_status (business_id, status)
 );
-
--- Low Stock Alerts
 CREATE TABLE IF NOT EXISTS stock_alerts (
   id INT PRIMARY KEY AUTO_INCREMENT,
   business_id INT NOT NULL,
@@ -481,10 +500,9 @@ CREATE TABLE IF NOT EXISTS stock_alerts (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   resolved_at TIMESTAMP NULL,
   FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
-  FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE CASCADE
+  FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE CASCADE,
+  INDEX idx_alerts_business_resolved (business_id, is_resolved)
 );
-
--- Notifications Log
 CREATE TABLE IF NOT EXISTS notifications (
   id INT PRIMARY KEY AUTO_INCREMENT,
   business_id INT NOT NULL,
@@ -494,10 +512,9 @@ CREATE TABLE IF NOT EXISTS notifications (
   message TEXT NOT NULL,
   status ENUM('pending', 'sent', 'failed') DEFAULT 'pending',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE
+  FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
+  INDEX idx_notifications_business_status (business_id, status)
 );
-
--- Password Reset Tokens
 CREATE TABLE IF NOT EXISTS password_resets (
   id INT PRIMARY KEY AUTO_INCREMENT,
   user_id INT NOT NULL,
@@ -521,10 +538,9 @@ CREATE TABLE IF NOT EXISTS payments (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
-  FOREIGN KEY (plan_id) REFERENCES plans(id)
+  FOREIGN KEY (plan_id) REFERENCES plans(id),
+  INDEX idx_payments_business_created (business_id, created_at)
 );
-
--- Audit Log
 CREATE TABLE IF NOT EXISTS audit_logs (
   id INT PRIMARY KEY AUTO_INCREMENT,
   business_id INT NOT NULL,

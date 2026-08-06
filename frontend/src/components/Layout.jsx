@@ -64,7 +64,7 @@ export default function Layout() {
       <aside className="fixed w-[260px] h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-white overflow-y-auto z-[100] shadow-xl shadow-slate-900/20">
         <div className="p-6 border-b border-white/5">
           <NavLink to="/app" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/25">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/25">
               <span className="text-white font-bold text-sm">V</span>
             </div>
             <div>
@@ -91,7 +91,7 @@ export default function Layout() {
                 <>
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 ${
                     isActive
-                      ? 'bg-teal-500/20 text-teal-300'
+                      ? 'bg-orange-500/20 text-orange-300'
                       : 'bg-white/5 text-white/40 group-hover:bg-white/10 group-hover:text-white/60'
                   }`}>
                     <Icon size={18} strokeWidth={isActive ? 2.2 : 1.8} />
@@ -104,7 +104,7 @@ export default function Layout() {
         </nav>
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/5 bg-gradient-to-t from-slate-950 to-transparent">
           <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/5">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center text-white text-xs font-bold">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white text-xs font-bold">
               {user?.firstName?.[0]}{user?.lastName?.[0]}
             </div>
             <div className="flex-1 min-w-0">
@@ -142,20 +142,20 @@ export default function Layout() {
                           onClick={() => handleBranchSwitch(b.id)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-all duration-150 ${
                             b.id === user?.branchId
-                              ? 'bg-teal-50 text-teal-700 font-semibold'
+                              ? 'bg-orange-50 text-orange-700 font-semibold'
                               : 'text-slate-600 hover:bg-slate-50'
                           }`}
                         >
                           <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-                            b.id === user?.branchId ? 'bg-teal-100' : 'bg-slate-100'
+                            b.id === user?.branchId ? 'bg-orange-100' : 'bg-slate-100'
                           }`}>
-                            <Building2 size={14} className={b.id === user?.branchId ? 'text-teal-600' : 'text-slate-400'} />
+                            <Building2 size={14} className={b.id === user?.branchId ? 'text-orange-600' : 'text-slate-400'} />
                           </div>
                           <div className="flex-1 text-left">
                             <p className="font-medium">{b.name}</p>
                             {b.code && <p className="text-[11px] text-slate-400">{b.code}</p>}
                           </div>
-                          {b.id === user?.branchId && <Check size={16} className="text-teal-600" />}
+                          {b.id === user?.branchId && <Check size={16} className="text-orange-600" />}
                         </button>
                       ))}
                     </div>
@@ -169,7 +169,7 @@ export default function Layout() {
           <div className="flex items-center gap-2">
             <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-wide uppercase ${
               isOnline
-                ? 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200/50'
+                ? 'bg-amber-50 text-amber-600 ring-1 ring-amber-200/50'
                 : 'bg-red-50 text-red-600 ring-1 ring-red-200/50'
             }`}>
               {isOnline ? <Wifi size={12} /> : <WifiOff size={12} />}

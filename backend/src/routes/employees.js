@@ -3,6 +3,20 @@ import bcrypt from 'bcryptjs';
 import pool from '../config/database.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/helpers.js';
+import { auditLog } from '../middleware/audit.js';
+import {
+  handleValidation,
+  validateEmail,
+  validatePassword,
+  validateRequiredString,
+  validateOptionalString,
+  validateEnum,
+  validateBoolean,
+  validateIdParam,
+} from '../middleware/validation.js';
+import { body } from 'express-validator';
+
+const VALID_ROLES = ['owner', 'admin', 'manager', 'cashier', 'field_sales', 'viewer'];
 
 const router = express.Router();
 
@@ -28,7 +42,7 @@ router.get('/', authenticate, authorize('owner', 'admin', 'manager'), asyncHandl
   res.json(employees);
 }));
 
-router.get('/:id', authenticate, authorize('owner', 'admin', 'manager'), asyncHandler(async (req, res) => {
+router.get('/:id', authenticate, authorize('owner', 'admin', 'manager'), [...validateIdParam('id'), handleValidation], asyncHandler(async (req, res) => {
   const [employees] = await pool.query(`
     SELECT u.id, u.email, u.first_name, u.last_name, u.phone, u.role, u.is_active,
            u.last_login, u.created_at, b.name as branch_name, b.id as branch_id
@@ -41,11 +55,20 @@ router.get('/:id', authenticate, authorize('owner', 'admin', 'manager'), asyncHa
   res.json(employees[0]);
 }));
 
-router.post('/', authenticate, authorize('owner', 'admin'), asyncHandler(async (req, res) => {
+router.post('/', authenticate, authorize('owner', 'admin'), [
+  validateEmail('email'),
+  validatePassword('password', 8),
+  validateRequiredString('firstName', 1, 100),
+  validateRequiredString('lastName', 1, 100),
+  validateOptionalString('phone', 50),
+  validateEnum('role', VALID_ROLES),
+  body('branchId').optional({ values: 'null' }).isInt({ min: 1 }).withMessage('branchId must be a positive integer'),
+  handleValidation,
+], asyncHandler(async (req, res) => {
   const { email, password, firstName, lastName, phone, role, branchId } = req.body;
 
-  if (!email || !password || !firstName || !lastName) {
-    return res.status(400).json({ error: 'Email, password, first name, and last name are required' });
+  if (role === 'owner') {
+    return res.status(403).json({ error: 'Cannot create owner accounts' });
   }
 
   const [planCheck] = await pool.query(`
@@ -67,11 +90,13 @@ router.post('/', authenticate, authorize('owner', 'admin'), asyncHandler(async (
     return res.status(409).json({ error: 'An employee with this email already exists' });
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await bcrypt.hash(password, 12);
   const [result] = await pool.query(`
     INSERT INTO users (business_id, branch_id, email, password_hash, first_name, last_name, phone, role)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `, [req.user.businessId, branchId || null, email, passwordHash, firstName, lastName, phone || null, role || 'cashier']);
+
+  auditLog(req.user.businessId, req.user.id, 'create', 'employee', result.insertId, { email, role, ip: req.ip });
 
   const [employee] = await pool.query(`
     SELECT u.id, u.email, u.first_name, u.last_name, u.phone, u.role, u.is_active, u.created_at,
@@ -83,7 +108,16 @@ router.post('/', authenticate, authorize('owner', 'admin'), asyncHandler(async (
   res.status(201).json(employee[0]);
 }));
 
-router.put('/:id', authenticate, authorize('owner', 'admin'), asyncHandler(async (req, res) => {
+router.put('/:id', authenticate, authorize('owner', 'admin'), [
+  ...validateIdParam('id'),
+  validateRequiredString('firstName', 1, 100),
+  validateRequiredString('lastName', 1, 100),
+  validateOptionalString('phone', 50),
+  validateEnum('role', VALID_ROLES),
+  validateBoolean('isActive'),
+  body('branchId').optional({ values: 'null' }).isInt({ min: 1 }).withMessage('branchId must be a positive integer'),
+  handleValidation,
+], asyncHandler(async (req, res) => {
   const { firstName, lastName, phone, role, branchId, isActive } = req.body;
   const targetId = req.params.id;
 
@@ -106,6 +140,8 @@ router.put('/:id', authenticate, authorize('owner', 'admin'), asyncHandler(async
     WHERE id=? AND business_id=?
   `, [firstName, lastName, phone, role, branchId || null, isActive !== false, targetId, req.user.businessId]);
 
+  auditLog(req.user.businessId, req.user.id, 'update', 'employee', targetId, { role, ip: req.ip });
+
   const [employee] = await pool.query(`
     SELECT u.id, u.email, u.first_name, u.last_name, u.phone, u.role, u.is_active,
            b.name as branch_name
@@ -116,13 +152,13 @@ router.put('/:id', authenticate, authorize('owner', 'admin'), asyncHandler(async
   res.json(employee[0]);
 }));
 
-router.post('/:id/reset-password', authenticate, authorize('owner', 'admin'), asyncHandler(async (req, res) => {
+router.post('/:id/reset-password', authenticate, authorize('owner', 'admin'), [
+  ...validateIdParam('id'),
+  validatePassword('newPassword', 8),
+  handleValidation,
+], asyncHandler(async (req, res) => {
   const { newPassword } = req.body;
   const targetId = req.params.id;
-
-  if (!newPassword || newPassword.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters' });
-  }
 
   const [existing] = await pool.query(
     'SELECT id FROM users WHERE id = ? AND business_id = ?',
@@ -130,8 +166,10 @@ router.post('/:id/reset-password', authenticate, authorize('owner', 'admin'), as
   );
   if (existing.length === 0) return res.status(404).json({ error: 'Employee not found' });
 
-  const passwordHash = await bcrypt.hash(newPassword, 10);
+  const passwordHash = await bcrypt.hash(newPassword, 12);
   await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [passwordHash, targetId]);
+
+  auditLog(req.user.businessId, req.user.id, 'password_reset_admin', 'employee', targetId, { ip: req.ip });
 
   res.json({ success: true, message: 'Password reset successfully' });
 }));
@@ -150,6 +188,8 @@ router.post('/clock-in', authenticate, asyncHandler(async (req, res) => {
     VALUES (?, ?, ?, NOW())
   `, [req.user.businessId, req.user.id, req.user.branchId]);
 
+  auditLog(req.user.businessId, req.user.id, 'clock_in', 'attendance', result.insertId, { ip: req.ip });
+
   res.status(201).json({ id: result.insertId, message: 'Clocked in successfully' });
 }));
 
@@ -166,6 +206,8 @@ router.post('/clock-out', authenticate, asyncHandler(async (req, res) => {
     'UPDATE employee_attendance SET clock_out = NOW() WHERE id = ?',
     [active[0].id]
   );
+
+  auditLog(req.user.businessId, req.user.id, 'clock_out', 'attendance', active[0].id, { ip: req.ip });
 
   const hours = ((Date.now() - new Date(active[0].clock_in).getTime()) / 3600000).toFixed(2);
   res.json({ message: 'Clocked out successfully', hoursWorked: hours });
@@ -199,13 +241,13 @@ router.get('/attendance/history', authenticate, authorize('owner', 'admin', 'man
   if (endDate) { query += ' AND DATE(ea.clock_in) <= ?'; params.push(endDate); }
 
   query += ' ORDER BY ea.clock_in DESC LIMIT ?';
-  params.push(parseInt(limit));
+  params.push(parseInt(limit) || 100);
 
   const [records] = await pool.query(query, params);
   res.json(records);
 }));
 
-router.get('/:id/performance', authenticate, authorize('owner', 'admin', 'manager'), asyncHandler(async (req, res) => {
+router.get('/:id/performance', authenticate, authorize('owner', 'admin', 'manager'), [...validateIdParam('id'), handleValidation], asyncHandler(async (req, res) => {
   const { period = 'today' } = req.query;
   const targetId = req.params.id;
 
@@ -255,7 +297,7 @@ router.get('/:id/performance', authenticate, authorize('owner', 'admin', 'manage
   });
 }));
 
-router.get('/:id/activity', authenticate, authorize('owner', 'admin', 'manager'), asyncHandler(async (req, res) => {
+router.get('/:id/activity', authenticate, authorize('owner', 'admin', 'manager'), [...validateIdParam('id'), handleValidation], asyncHandler(async (req, res) => {
   const { limit = 50 } = req.query;
   const targetId = req.params.id;
 
@@ -264,18 +306,18 @@ router.get('/:id/activity', authenticate, authorize('owner', 'admin', 'manager')
            s.payment_method, s.created_at
     FROM sales s WHERE s.cashier_id = ? AND s.business_id = ?
     ORDER BY s.created_at DESC LIMIT ?
-  `, [targetId, req.user.businessId, parseInt(limit)]);
+  `, [targetId, req.user.businessId, parseInt(limit) || 50]);
 
   const [movements] = await pool.query(`
     SELECT 'stock' as type, sm.id, sm.movement_type as reference, sm.quantity as amount,
            sm.notes, sm.created_at
     FROM stock_movements sm WHERE sm.created_by = ? AND sm.business_id = ?
     ORDER BY sm.created_at DESC LIMIT ?
-  `, [targetId, req.user.businessId, parseInt(limit)]);
+  `, [targetId, req.user.businessId, parseInt(limit) || 50]);
 
   const combined = [...sales, ...movements]
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    .slice(0, parseInt(limit));
+    .slice(0, parseInt(limit) || 50);
 
   res.json(combined);
 }));

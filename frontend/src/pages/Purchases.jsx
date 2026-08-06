@@ -78,7 +78,7 @@ export default function Purchases() {
     load();
   };
 
-  const inputClass = "w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200";
+  const inputClass = "w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200";
 
   const actionButtons = {
     suppliers: { label: 'Add Supplier', onClick: () => setShowSupplierModal(true) },
@@ -90,7 +90,7 @@ export default function Purchases() {
     <div className="animate-fade-in">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-slate-800">Purchases & Expenses</h1>
-        <button className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:shadow-xl hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]" onClick={actionButtons[tab].onClick}>
+        <button className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:shadow-xl hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]" onClick={actionButtons[tab].onClick}>
           <Plus size={18} /> {actionButtons[tab].label}
         </button>
       </div>
@@ -134,7 +134,7 @@ export default function Purchases() {
                     <td className="py-3.5 px-5 text-sm text-slate-600">{formatCurrency(p.amount_paid, user?.currency)}</td>
                     <td className="py-3.5 px-5">
                       <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                        p.status === 'completed' ? 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/50'
+                        p.status === 'completed' ? 'bg-amber-50 text-amber-600 ring-1 ring-amber-100/50'
                         : p.status === 'pending' ? 'bg-amber-50 text-amber-600 ring-1 ring-amber-100/50'
                         : 'bg-slate-50 text-slate-600 ring-1 ring-slate-100/50'
                       }`}>{p.status}</span>
@@ -241,7 +241,7 @@ export default function Purchases() {
               </div>
               <div className="flex gap-3 justify-end">
                 <button type="button" className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-200" onClick={() => setShowSupplierModal(false)}>Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]">Save Supplier</button>
+                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]">Save Supplier</button>
               </div>
             </form>
           </div>
@@ -276,17 +276,17 @@ export default function Purchases() {
               <div className="mb-4">
                 <div className="flex justify-between items-center mb-3">
                   <label className="text-[13px] font-semibold text-slate-600">Items</label>
-                  <button type="button" className="text-sm text-teal-600 font-semibold hover:text-teal-700 transition-colors" onClick={addPurchaseItem}>+ Add Item</button>
+                  <button type="button" className="text-sm text-orange-600 font-semibold hover:text-orange-700 transition-colors" onClick={addPurchaseItem}>+ Add Item</button>
                 </div>
                 <div className="space-y-2">
                   {purchaseForm.items.map((item, idx) => (
                     <div key={idx} className="grid grid-cols-[1fr_100px_120px_40px] gap-2">
-                      <select className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10" value={item.productId} onChange={e => updatePurchaseItem(idx, 'productId', e.target.value)} required>
+                      <select className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10" value={item.productId} onChange={e => updatePurchaseItem(idx, 'productId', e.target.value)} required>
                         <option value="">Select product</option>
                         {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                       </select>
-                      <input className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10" type="number" placeholder="Qty" value={item.quantity} onChange={e => updatePurchaseItem(idx, 'quantity', e.target.value)} required />
-                      <input className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10" type="number" placeholder="Unit Cost" value={item.unitCost} onChange={e => updatePurchaseItem(idx, 'unitCost', e.target.value)} required />
+                      <input className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10" type="number" placeholder="Qty" value={item.quantity} onChange={e => updatePurchaseItem(idx, 'quantity', e.target.value)} required />
+                      <input className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10" type="number" placeholder="Unit Cost" value={item.unitCost} onChange={e => updatePurchaseItem(idx, 'unitCost', e.target.value)} required />
                       {purchaseForm.items.length > 1 && (
                         <button type="button" className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all flex items-center justify-center" onClick={() => removePurchaseItem(idx)}><X size={14} /></button>
                       )}
@@ -303,14 +303,14 @@ export default function Purchases() {
                 <div className="flex items-end">
                   <div className="text-right w-full p-3 bg-slate-50/80 rounded-xl">
                     <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-0.5">Total</div>
-                    <div className="text-2xl font-bold tracking-tight text-teal-600">{formatCurrency(purchaseTotal, user?.currency)}</div>
+                    <div className="text-2xl font-bold tracking-tight text-orange-600">{formatCurrency(purchaseTotal, user?.currency)}</div>
                   </div>
                 </div>
               </div>
 
               <div className="flex gap-3 justify-end mt-4">
                 <button type="button" className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-200" onClick={() => setShowPurchaseModal(false)}>Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]">Create Purchase</button>
+                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]">Create Purchase</button>
               </div>
             </form>
           </div>
@@ -359,7 +359,7 @@ export default function Purchases() {
               </div>
               <div className="flex gap-3 justify-end">
                 <button type="button" className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-200" onClick={() => setShowExpenseModal(false)}>Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]">Save Expense</button>
+                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]">Save Expense</button>
               </div>
             </form>
           </div>

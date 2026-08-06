@@ -3,19 +3,28 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import pool from '../config/database.js';
 import { asyncHandler } from '../utils/helpers.js';
+import { auditLog } from '../middleware/audit.js';
 import { sendEmail, welcomeEmail } from '../services/email.js';
+import {
+  handleValidation,
+  validateEmail,
+  validatePassword,
+  validateRequiredString,
+  validateOptionalString,
+} from '../middleware/validation.js';
 
 const router = express.Router();
 
-router.post('/register', asyncHandler(async (req, res) => {
+router.post('/register', [
+  validateRequiredString('businessName', 2, 255),
+  validateRequiredString('firstName', 1, 100),
+  validateRequiredString('lastName', 1, 100),
+  validateEmail('email'),
+  validatePassword('password', 6),
+  validateOptionalString('businessPhone', 50),
+  validateOptionalString('businessCity', 100),
+], handleValidation, asyncHandler(async (req, res) => {
   const { businessName, businessPhone, businessEmail, businessCity, firstName, lastName, email, password, plan } = req.body;
-
-  if (!businessName || !firstName || !lastName || !email || !password) {
-    return res.status(400).json({ error: 'All fields are required' });
-  }
-  if (password.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters' });
-  }
 
   const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
   if (existing.length > 0) {
@@ -44,7 +53,7 @@ router.post('/register', asyncHandler(async (req, res) => {
     );
     const branchId = branchResult.insertId;
 
-    const hash = await bcrypt.hash(password, 10);
+    const hash = await bcrypt.hash(password, 12);
     const [userResult] = await conn.query(
       'INSERT INTO users (business_id, branch_id, email, password_hash, first_name, last_name, role) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [businessId, branchId, email, hash, firstName, lastName, 'owner']
@@ -52,6 +61,8 @@ router.post('/register', asyncHandler(async (req, res) => {
     const userId = userResult.insertId;
 
     await conn.commit();
+
+    auditLog(businessId, userId, 'register', 'business', businessId, { email, ip: req.ip });
 
     const [planData] = await pool.query('SELECT * FROM plans WHERE id = ?', [planId]);
     const planFeatures = typeof planData[0]?.features === 'string' ? JSON.parse(planData[0].features) : planData[0]?.features || {};

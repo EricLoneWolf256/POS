@@ -10,7 +10,7 @@ const exports = [
   { key: 'profit-loss', label: 'Profit & Loss', icon: 'chart' },
 ];
 
-export default function ExportButton({ type = 'dropdown', className = '' }) {
+export default function ExportButton({ type = 'dropdown', exportKey = '' }) {
   const [loading, setLoading] = useState(null);
   const [open, setOpen] = useState(false);
 
@@ -40,10 +40,10 @@ export default function ExportButton({ type = 'dropdown', className = '' }) {
   if (type === 'inline') {
     return (
       <div className="flex gap-1.5">
-        <button onClick={() => doExport(className, 'csv')} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-all active:scale-[0.98]">
+        <button onClick={() => doExport(exportKey, 'csv')} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-all active:scale-[0.98]">
           <FileText size={13} /> CSV
         </button>
-        <button onClick={() => doExport(className, 'xlsx')} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/60 rounded-lg hover:bg-emerald-100 transition-all active:scale-[0.98]">
+        <button onClick={() => doExport(exportKey, 'xlsx')} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200/60 rounded-lg hover:bg-amber-100 transition-all active:scale-[0.98]">
           <Table size={13} /> Excel
         </button>
       </div>
@@ -66,7 +66,7 @@ export default function ExportButton({ type = 'dropdown', className = '' }) {
                   <button disabled={loading === `${e.key}-csv`} onClick={() => doExport(e.key, 'csv')} className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 rounded-lg transition-all">
                     <FileText size={11} /> CSV
                   </button>
-                  <button disabled={loading === `${e.key}-xlsx`} onClick={() => doExport(e.key, 'xlsx')} className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50 rounded-lg transition-all">
+                  <button disabled={loading === `${e.key}-xlsx`} onClick={() => doExport(e.key, 'xlsx')} className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-50 rounded-lg transition-all">
                     <Table size={11} /> Excel
                   </button>
                 </div>

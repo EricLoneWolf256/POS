@@ -2,6 +2,17 @@ import express from 'express';
 import pool from '../config/database.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/helpers.js';
+import { auditLog } from '../middleware/audit.js';
+import {
+  handleValidation,
+  validateRequiredString,
+  validateOptionalString,
+  validateOptionalEmail,
+  validateOptionalPositiveNumber,
+  validateBoolean,
+  validateIdParam,
+} from '../middleware/validation.js';
+import { body } from 'express-validator';
 
 const router = express.Router();
 
@@ -21,7 +32,7 @@ router.get('/', authenticate, asyncHandler(async (req, res) => {
   res.json(customers);
 }));
 
-router.get('/:id', authenticate, asyncHandler(async (req, res) => {
+router.get('/:id', authenticate, [...validateIdParam('id'), handleValidation], asyncHandler(async (req, res) => {
   const [customers] = await pool.query(
     'SELECT * FROM customers WHERE id = ? AND business_id = ?',
     [req.params.id, req.user.businessId]
@@ -43,23 +54,45 @@ router.get('/:id', authenticate, asyncHandler(async (req, res) => {
   res.json({ ...customers[0], purchases, stats: stats[0] });
 }));
 
-router.post('/', authenticate, asyncHandler(async (req, res) => {
+router.post('/', authenticate, [
+  validateRequiredString('name', 1, 255),
+  validateOptionalEmail('email'),
+  validateOptionalString('phone', 50),
+  validateOptionalString('address', 500),
+  validateOptionalPositiveNumber('creditLimit'),
+  validateOptionalString('notes', 1000),
+  handleValidation,
+], asyncHandler(async (req, res) => {
   const { name, email, phone, address, creditLimit, notes } = req.body;
   const [result] = await pool.query(`
     INSERT INTO customers (business_id, name, email, phone, address, credit_limit, notes)
     VALUES (?, ?, ?, ?, ?, ?, ?)
-  `, [req.user.businessId, name, email, phone, address, creditLimit || 0, notes]);
+  `, [req.user.businessId, name, email || null, phone || null, address || null, creditLimit || 0, notes || null]);
+
+  auditLog(req.user.businessId, req.user.id, 'create', 'customer', result.insertId, { name, ip: req.ip });
 
   const [customer] = await pool.query('SELECT * FROM customers WHERE id = ?', [result.insertId]);
   res.status(201).json(customer[0]);
 }));
 
-router.put('/:id', authenticate, asyncHandler(async (req, res) => {
+router.put('/:id', authenticate, [
+  ...validateIdParam('id'),
+  validateRequiredString('name', 1, 255),
+  validateOptionalEmail('email'),
+  validateOptionalString('phone', 50),
+  validateOptionalString('address', 500),
+  validateOptionalPositiveNumber('creditLimit'),
+  validateOptionalString('notes', 1000),
+  validateBoolean('isActive'),
+  handleValidation,
+], asyncHandler(async (req, res) => {
   const { name, email, phone, address, creditLimit, notes, isActive } = req.body;
   await pool.query(`
     UPDATE customers SET name=?, email=?, phone=?, address=?, credit_limit=?, notes=?, is_active=?
     WHERE id=? AND business_id=?
-  `, [name, email, phone, address, creditLimit, notes, isActive !== false, req.params.id, req.user.businessId]);
+  `, [name, email || null, phone || null, address || null, creditLimit || 0, notes || null, isActive !== false, req.params.id, req.user.businessId]);
+
+  auditLog(req.user.businessId, req.user.id, 'update', 'customer', req.params.id, { name, ip: req.ip });
 
   const [customer] = await pool.query('SELECT * FROM customers WHERE id = ?', [req.params.id]);
   res.json(customer[0]);

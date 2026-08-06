@@ -63,13 +63,13 @@ export default function Quotations() {
     load();
   };
 
-  const inputClass = "w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200";
+  const inputClass = "w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200";
 
   return (
     <div className="animate-fade-in">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-slate-800">Quotations</h1>
-        <button className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:shadow-xl hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]" onClick={() => setShowModal(true)}>
+        <button className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:shadow-xl hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]" onClick={() => setShowModal(true)}>
           <Plus size={18} /> New Quotation
         </button>
       </div>
@@ -101,7 +101,7 @@ export default function Quotations() {
                   <td className="py-3.5 px-5">
                     <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold ${
                       q.status === 'sent' ? 'bg-blue-50 text-blue-600 ring-1 ring-blue-100/50'
-                      : q.status === 'accepted' ? 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/50'
+                      : q.status === 'accepted' ? 'bg-amber-50 text-amber-600 ring-1 ring-amber-100/50'
                       : q.status === 'rejected' ? 'bg-red-50 text-red-600 ring-1 ring-red-100/50'
                       : 'bg-slate-50 text-slate-600 ring-1 ring-slate-100/50'
                     }`}>
@@ -147,18 +147,18 @@ export default function Quotations() {
               <div className="mb-4">
                 <div className="flex justify-between items-center mb-3">
                   <label className="text-[13px] font-semibold text-slate-600">Items</label>
-                  <button type="button" className="text-sm text-teal-600 font-semibold hover:text-teal-700 transition-colors" onClick={addItem}>+ Add Item</button>
+                  <button type="button" className="text-sm text-orange-600 font-semibold hover:text-orange-700 transition-colors" onClick={addItem}>+ Add Item</button>
                 </div>
                 <div className="space-y-2">
                   {form.items.map((item, idx) => (
                     <div key={idx} className="grid grid-cols-[1fr_2fr_80px_120px_40px] gap-2">
-                      <select className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10" value={item.productId} onChange={e => updateItem(idx, 'productId', e.target.value)} required>
+                      <select className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10" value={item.productId} onChange={e => updateItem(idx, 'productId', e.target.value)} required>
                         <option value="">Product</option>
                         {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                       </select>
-                      <input className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10" placeholder="Description" value={item.description} onChange={e => updateItem(idx, 'description', e.target.value)} />
-                      <input className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10" type="number" placeholder="Qty" value={item.quantity} onChange={e => updateItem(idx, 'quantity', e.target.value)} required />
-                      <input className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10" type="number" placeholder="Price" value={item.unitPrice} onChange={e => updateItem(idx, 'unitPrice', e.target.value)} required />
+                      <input className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10" placeholder="Description" value={item.description} onChange={e => updateItem(idx, 'description', e.target.value)} />
+                      <input className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10" type="number" placeholder="Qty" value={item.quantity} onChange={e => updateItem(idx, 'quantity', e.target.value)} required />
+                      <input className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10" type="number" placeholder="Price" value={item.unitPrice} onChange={e => updateItem(idx, 'unitPrice', e.target.value)} required />
                       {form.items.length > 1 && (
                         <button type="button" className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all flex items-center justify-center" onClick={() => removeItem(idx)}><X size={14} /></button>
                       )}
@@ -185,7 +185,7 @@ export default function Quotations() {
 
               <div className="flex gap-3 justify-end mt-4">
                 <button type="button" className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-200" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]">Create Quotation</button>
+                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]">Create Quotation</button>
               </div>
             </form>
           </div>

@@ -3,6 +3,9 @@ import crypto from 'crypto';
 import pool from '../config/database.js';
 import { authenticate } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/helpers.js';
+import { auditLog } from '../middleware/audit.js';
+import { body } from 'express-validator';
+import { handleValidation } from '../middleware/validation.js';
 
 const router = express.Router();
 
@@ -14,7 +17,11 @@ router.get('/config', (req, res) => {
   res.json({ publicKey: FLW_PUBLIC || null, configured: !!FLW_SECRET });
 });
 
-router.post('/initialize', authenticate, asyncHandler(async (req, res) => {
+router.post('/initialize', authenticate, [
+  body('planId').isInt({ min: 1 }).withMessage('planId must be a valid plan ID'),
+  body('redirectUrl').optional({ values: 'null' }).isURL().withMessage('redirectUrl must be a valid URL'),
+  handleValidation,
+], asyncHandler(async (req, res) => {
   const { planId, redirectUrl } = req.body;
 
   const [plans] = await pool.query('SELECT * FROM plans WHERE id = ?', [planId]);
@@ -78,12 +85,19 @@ router.post('/initialize', authenticate, asyncHandler(async (req, res) => {
 
 router.post('/webhook', asyncHandler(async (req, res) => {
   const secretHash = process.env.FLUTTERWAVE_WEBHOOK_HASH;
-  if (secretHash) {
-    const signature = req.headers['verif-hash'];
-    const hash = crypto.createHash('sha256').update(JSON.stringify(req.body)).digest('hex');
-    if (hash !== signature) {
-      return res.status(400).json({ error: 'Invalid signature' });
-    }
+  if (!secretHash) {
+    console.error('[WEBHOOK] FLUTTERWAVE_WEBHOOK_HASH not configured — rejecting webhook for security');
+    return res.status(503).json({ error: 'Webhook not configured' });
+  }
+
+  const signature = req.headers['verif-hash'];
+  if (!signature) {
+    return res.status(400).json({ error: 'Missing webhook signature' });
+  }
+
+  if (signature !== secretHash) {
+    console.error('[WEBHOOK] Invalid signature received');
+    return res.status(400).json({ error: 'Invalid signature' });
   }
 
   const { event, data } = req.body;
@@ -97,6 +111,8 @@ router.post('/webhook', asyncHandler(async (req, res) => {
       const newDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
       await pool.query('UPDATE businesses SET plan_id = ?, subscription_expires_at = ?, updated_at = NOW() WHERE id = ?',
         [payment.plan_id, newDate, payment.business_id]);
+
+      auditLog(payment.business_id, null, 'payment_completed', 'payment', payment.id, { txRef, plan_id: payment.plan_id });
     }
   }
 

@@ -38,15 +38,15 @@ export default function Reports() {
         <div className="bg-white rounded-2xl border border-slate-200/80 p-6 mb-6 shadow-sm shadow-slate-200/50">
           <div className="flex justify-between items-center mb-5">
             <h3 className="text-base font-semibold tracking-tight text-slate-800">Profit & Loss Statement</h3>
-            <ExportButton type="inline" className="profit-loss" />
+            <ExportButton type="inline" exportKey="profit-loss" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {[
               { label: 'Revenue', value: formatCurrency(profitLoss.revenue, user?.currency), color: 'text-slate-800' },
               { label: 'Cost of Goods', value: formatCurrency(profitLoss.costOfGoodsSold, user?.currency), color: 'text-rose-600' },
-              { label: 'Gross Profit', value: formatCurrency(profitLoss.grossProfit, user?.currency), color: 'text-emerald-600' },
+              { label: 'Gross Profit', value: formatCurrency(profitLoss.grossProfit, user?.currency), color: 'text-amber-600' },
               { label: 'Expenses', value: formatCurrency(profitLoss.expenses, user?.currency), color: 'text-amber-600' },
-              { label: 'Net Profit', value: formatCurrency(profitLoss.netProfit, user?.currency), color: profitLoss.netProfit >= 0 ? 'text-emerald-600' : 'text-rose-600' },
+              { label: 'Net Profit', value: formatCurrency(profitLoss.netProfit, user?.currency), color: profitLoss.netProfit >= 0 ? 'text-amber-600' : 'text-rose-600' },
             ].map((s, i) => (
               <div key={s.label} className="bg-slate-50/80 rounded-xl border border-slate-200/60 p-4">
                 <div className={`text-lg font-bold tracking-tight ${s.color}`}>{s.value}</div>
@@ -66,7 +66,7 @@ export default function Reports() {
                 <span className="text-slate-400">Cost: <strong className="text-slate-700">{formatCurrency(inventory.totals.costValue, user?.currency)}</strong></span>
                 <span className="text-slate-400">Retail: <strong className="text-slate-700">{formatCurrency(inventory.totals.retailValue, user?.currency)}</strong></span>
               </div>
-              <ExportButton type="inline" className="inventory" />
+              <ExportButton type="inline" exportKey="inventory" />
             </div>
           </div>
           <div className="overflow-x-auto">

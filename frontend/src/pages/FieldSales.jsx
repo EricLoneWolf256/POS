@@ -43,7 +43,7 @@ export default function FieldSales() {
                     <td className="py-3 px-4 text-sm text-slate-600">{p.trips}</td>
                     <td className="py-3 px-4 text-sm font-semibold text-slate-800">{formatCurrency(p.total_sales)}</td>
                     <td className="py-3 px-4 text-sm text-slate-600">{formatCurrency(p.total_expenses)}</td>
-                    <td className={`py-3 px-4 text-sm font-semibold ${p.net >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{formatCurrency(p.net)}</td>
+                    <td className={`py-3 px-4 text-sm font-semibold ${p.net >= 0 ? 'text-amber-600' : 'text-rose-600'}`}>{formatCurrency(p.net)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -75,7 +75,7 @@ export default function FieldSales() {
                   <td className="py-3.5 px-4 text-sm font-semibold text-slate-800">{formatCurrency(t.total_sales)}</td>
                   <td className="py-3.5 px-4 text-sm text-slate-600">{formatCurrency(t.total_expenses)}</td>
                   <td className="py-3.5 px-4">
-                    <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold ${t.status === 'active' ? 'bg-amber-50 text-amber-600 ring-1 ring-amber-100/50' : 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/50'}`}>
+                    <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold ${t.status === 'active' ? 'bg-amber-50 text-amber-600 ring-1 ring-amber-100/50' : 'bg-amber-50 text-amber-600 ring-1 ring-amber-100/50'}`}>
                       {t.status}
                     </span>
                   </td>

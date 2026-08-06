@@ -148,9 +148,9 @@ export default function Products() {
     <div className="animate-fade-in">
       {scanToast && (
         <div className={`fixed top-4 right-4 z-[300] flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium shadow-xl animate-slide-up ${
-          scanToast.type === 'saved' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60' :
+          scanToast.type === 'saved' ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200/60' :
           scanToast.type === 'exists' ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200/60' :
-          'bg-teal-50 text-teal-700 ring-1 ring-teal-200/60'
+          'bg-orange-50 text-orange-700 ring-1 ring-orange-200/60'
         }`}>
           {scanToast.type === 'saved' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
           {scanToast.message}
@@ -161,7 +161,7 @@ export default function Products() {
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold tracking-tight text-slate-800">Products</h1>
           {scanMode && showModal && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 text-teal-700 rounded-lg text-xs font-semibold ring-1 ring-teal-200/60 animate-fade-in">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-50 text-orange-700 rounded-lg text-xs font-semibold ring-1 ring-orange-200/60 animate-fade-in">
               <ScanLine size={13} /> Scan mode — {scanCount} added
             </span>
           )}
@@ -170,7 +170,7 @@ export default function Products() {
           <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-semibold text-sm shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 active:scale-[0.98]" onClick={openScanAdd}>
             <ScanLine size={16} /> Scan & Add
           </button>
-          <button className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/30 hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]" onClick={openAdd}>
+          <button className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]" onClick={openAdd}>
             <Plus size={18} /> Add Product
           </button>
         </div>
@@ -179,7 +179,7 @@ export default function Products() {
       <div className="relative mb-6">
         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
-          className="w-full pl-11 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white shadow-sm focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 placeholder:text-slate-400"
+          className="w-full pl-11 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white shadow-sm focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200 placeholder:text-slate-400"
           placeholder="Search products by name, SKU, or barcode..."
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -214,7 +214,7 @@ export default function Products() {
                       </span>
                     ) : (
                       <button
-                        className="inline-flex items-center gap-1 text-teal-600 hover:text-teal-700 text-xs font-semibold transition-colors"
+                        className="inline-flex items-center gap-1 text-orange-600 hover:text-orange-700 text-xs font-semibold transition-colors"
                         onClick={() => generateBarcode(p)}
                         title="Generate barcode for this product"
                       >
@@ -227,12 +227,12 @@ export default function Products() {
                   <td className="py-3.5 px-5 text-sm font-semibold text-slate-800">{formatCurrency(p.selling_price, user?.currency)}</td>
                   <td className="py-3.5 px-5">
                     <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                      p.stock_quantity <= p.low_stock_threshold ? 'bg-red-50 text-red-600 ring-1 ring-red-100/50' : 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/50'
+                      p.stock_quantity <= p.low_stock_threshold ? 'bg-red-50 text-red-600 ring-1 ring-red-100/50' : 'bg-amber-50 text-amber-600 ring-1 ring-amber-100/50'
                     }`}>
                       {p.stock_quantity || 0}
                     </span>
                   </td>
-                  <td className="py-3.5 px-5"><span className="inline-flex px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-semibold ring-1 ring-emerald-100/50">Active</span></td>
+                  <td className="py-3.5 px-5"><span className="inline-flex px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-xs font-semibold ring-1 ring-amber-100/50">Active</span></td>
                   <td className="py-3.5 px-5">
                     <div className="flex items-center justify-end gap-1">
                       <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" onClick={() => openEdit(p)}>
@@ -279,13 +279,13 @@ export default function Products() {
                 <div className="relative">
                   <input
                     ref={scanInputRef}
-                    className="w-full px-4 py-3 border-2 border-dashed border-teal-300 rounded-xl text-sm bg-teal-50/50 focus:bg-white focus:border-teal-500 focus:border-solid focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 font-mono text-base tracking-wider placeholder:text-teal-400"
+                    className="w-full px-4 py-3 border-2 border-dashed border-orange-300 rounded-xl text-sm bg-orange-50/50 focus:bg-white focus:border-orange-500 focus:border-solid focus:ring-4 focus:ring-orange-500/10 transition-all duration-200 font-mono text-base tracking-wider placeholder:text-orange-400"
                     placeholder="Scan barcode now..."
                     value={scanInputValue}
                     onChange={e => setScanInputValue(e.target.value)}
                     onKeyDown={handleScanKeyDown}
                   />
-                  <ScanLine size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-teal-400 animate-pulse" />
+                  <ScanLine size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-400 animate-pulse" />
                 </div>
                 <p className="text-[11px] text-slate-400 mt-1.5">Press Enter after scanning — or type the barcode manually</p>
               </div>
@@ -294,19 +294,19 @@ export default function Products() {
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
                 <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Name *</label>
-                <input ref={nameInputRef} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200" value={form.name} onChange={e => setForm({...form, name: e.target.value})} required />
+                <input ref={nameInputRef} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" value={form.name} onChange={e => setForm({...form, name: e.target.value})} required />
               </div>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">SKU</label>
-                  <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200" value={form.sku} onChange={e => setForm({...form, sku: e.target.value})} />
+                  <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" value={form.sku} onChange={e => setForm({...form, sku: e.target.value})} />
                 </div>
                 <div>
                   <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Barcode</label>
                   <div className="flex gap-2">
-                    <input className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 font-mono" value={form.barcode} onChange={e => setForm({...form, barcode: e.target.value})} placeholder="Enter or scan barcode" readOnly={scanMode && !editingProduct} />
+                    <input className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200 font-mono" value={form.barcode} onChange={e => setForm({...form, barcode: e.target.value})} placeholder="Enter or scan barcode" readOnly={scanMode && !editingProduct} />
                     {editingProduct && (
-                      <button type="button" className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold text-teal-600 bg-teal-50 border border-teal-200/60 rounded-xl hover:bg-teal-100 transition-all whitespace-nowrap" onClick={generateBarcodeForForm}>
+                      <button type="button" className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-200/60 rounded-xl hover:bg-orange-100 transition-all whitespace-nowrap" onClick={generateBarcodeForForm}>
                         <ScanLine size={13} /> Auto
                       </button>
                     )}
@@ -315,7 +315,7 @@ export default function Products() {
               </div>
               <div className="mb-4">
                 <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Category</label>
-                <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200" value={form.categoryId} onChange={e => setForm({...form, categoryId: e.target.value})}>
+                <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" value={form.categoryId} onChange={e => setForm({...form, categoryId: e.target.value})}>
                   <option value="">Select category</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
@@ -323,28 +323,28 @@ export default function Products() {
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Cost Price</label>
-                  <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200" type="number" value={form.costPrice} onChange={e => setForm({...form, costPrice: e.target.value})} />
+                  <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" type="number" value={form.costPrice} onChange={e => setForm({...form, costPrice: e.target.value})} />
                 </div>
                 <div>
                   <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Selling Price *</label>
-                  <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200" type="number" value={form.sellingPrice} onChange={e => setForm({...form, sellingPrice: e.target.value})} required />
+                  <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" type="number" value={form.sellingPrice} onChange={e => setForm({...form, sellingPrice: e.target.value})} required />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
                   <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Low Stock Alert</label>
-                  <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200" type="number" value={form.lowStockThreshold} onChange={e => setForm({...form, lowStockThreshold: e.target.value})} />
+                  <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" type="number" value={form.lowStockThreshold} onChange={e => setForm({...form, lowStockThreshold: e.target.value})} />
                 </div>
                 {!editingProduct && (
                   <div>
                     <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Initial Stock</label>
-                    <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200" type="number" value={form.initialStock} onChange={e => setForm({...form, initialStock: e.target.value})} />
+                    <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" type="number" value={form.initialStock} onChange={e => setForm({...form, initialStock: e.target.value})} />
                   </div>
                 )}
               </div>
               <div className="flex gap-3 justify-end">
                 <button type="button" className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 active:scale-[0.98]" onClick={() => setShowModal(false)}>{scanMode ? 'Done' : 'Cancel'}</button>
-                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:shadow-xl hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]">
+                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:shadow-xl hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]">
                   {editingProduct ? 'Update Product' : scanMode ? 'Save & Scan Next' : 'Save Product'}
                 </button>
               </div>

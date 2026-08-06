@@ -68,7 +68,7 @@ export default function StockPage() {
             <ArrowRightLeft size={16} /> Transfer
           </button>
           <button
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:shadow-xl hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:shadow-xl hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]"
             onClick={() => setShowAdjust(true)}
           >
             Adjust Stock
@@ -135,7 +135,7 @@ export default function StockPage() {
                         s.quantity <= 0 ? 'bg-red-50 text-red-600 ring-1 ring-red-100/50'
                         : s.quantity <= s.low_stock_threshold ? 'bg-red-50 text-red-600 ring-1 ring-red-100/50'
                         : s.quantity <= s.low_stock_threshold * 2 ? 'bg-amber-50 text-amber-600 ring-1 ring-amber-100/50'
-                        : 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/50'
+                        : 'bg-amber-50 text-amber-600 ring-1 ring-amber-100/50'
                       }`}>
                         {s.quantity <= 0 ? 'Out of Stock' : s.quantity <= s.low_stock_threshold ? 'Low Stock' : s.quantity <= s.low_stock_threshold * 2 ? 'Warning' : 'In Stock'}
                       </span>
@@ -164,7 +164,7 @@ export default function StockPage() {
                     <td className="py-3.5 px-5 text-sm text-slate-500">{new Date(m.created_at).toLocaleString('en-UG')}</td>
                     <td className="py-3.5 px-5 text-sm font-medium text-slate-700">{m.product_name}</td>
                     <td className="py-3.5 px-5"><span className="inline-flex px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-semibold ring-1 ring-blue-100/50">{m.movement_type.replace('_', ' ')}</span></td>
-                    <td className={`py-3.5 px-5 text-sm font-semibold ${m.quantity < 0 ? 'text-red-500' : 'text-emerald-600'}`}>
+                    <td className={`py-3.5 px-5 text-sm font-semibold ${m.quantity < 0 ? 'text-red-500' : 'text-amber-600'}`}>
                       {m.quantity > 0 ? '+' : ''}{m.quantity}
                     </td>
                     <td className="py-3.5 px-5 text-sm text-slate-600">{m.branch_name}</td>
@@ -187,7 +187,7 @@ export default function StockPage() {
             <form onSubmit={handleAdjust}>
               <div className="mb-4">
                 <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Product</label>
-                <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200" value={adjustForm.productId} onChange={e => setAdjustForm({...adjustForm, productId: e.target.value})} required>
+                <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" value={adjustForm.productId} onChange={e => setAdjustForm({...adjustForm, productId: e.target.value})} required>
                   <option value="">Select product</option>
                   {[...new Map(stock.map(s => [s.product_id, s])).values()].map(s => (
                     <option key={s.product_id} value={s.product_id}>{s.product_name}</option>
@@ -196,15 +196,15 @@ export default function StockPage() {
               </div>
               <div className="mb-4">
                 <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">New Quantity</label>
-                <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200" type="number" value={adjustForm.quantity} onChange={e => setAdjustForm({...adjustForm, quantity: e.target.value})} required />
+                <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" type="number" value={adjustForm.quantity} onChange={e => setAdjustForm({...adjustForm, quantity: e.target.value})} required />
               </div>
               <div className="mb-6">
                 <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Notes</label>
-                <textarea className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200" value={adjustForm.notes} onChange={e => setAdjustForm({...adjustForm, notes: e.target.value})} rows={3} />
+                <textarea className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" value={adjustForm.notes} onChange={e => setAdjustForm({...adjustForm, notes: e.target.value})} rows={3} />
               </div>
               <div className="flex gap-3 justify-end">
                 <button type="button" className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-200" onClick={() => setShowAdjust(false)}>Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]">Adjust</button>
+                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]">Adjust</button>
               </div>
             </form>
           </div>
@@ -221,7 +221,7 @@ export default function StockPage() {
             <form onSubmit={handleTransfer}>
               <div className="mb-4">
                 <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Product</label>
-                <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200" value={transferForm.productId} onChange={e => setTransferForm({...transferForm, productId: e.target.value})} required>
+                <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" value={transferForm.productId} onChange={e => setTransferForm({...transferForm, productId: e.target.value})} required>
                   <option value="">Select product</option>
                   {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
@@ -229,14 +229,14 @@ export default function StockPage() {
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">From Branch</label>
-                  <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200" value={transferForm.fromBranchId} onChange={e => setTransferForm({...transferForm, fromBranchId: e.target.value})} required>
+                  <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" value={transferForm.fromBranchId} onChange={e => setTransferForm({...transferForm, fromBranchId: e.target.value})} required>
                     <option value="">Select branch</option>
                     {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">To Branch</label>
-                  <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200" value={transferForm.toBranchId} onChange={e => setTransferForm({...transferForm, toBranchId: e.target.value})} required>
+                  <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" value={transferForm.toBranchId} onChange={e => setTransferForm({...transferForm, toBranchId: e.target.value})} required>
                     <option value="">Select branch</option>
                     {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                   </select>
@@ -244,15 +244,15 @@ export default function StockPage() {
               </div>
               <div className="mb-4">
                 <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Quantity</label>
-                <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200" type="number" value={transferForm.quantity} onChange={e => setTransferForm({...transferForm, quantity: e.target.value})} required />
+                <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" type="number" value={transferForm.quantity} onChange={e => setTransferForm({...transferForm, quantity: e.target.value})} required />
               </div>
               <div className="mb-6">
                 <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Notes</label>
-                <textarea className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200" value={transferForm.notes} onChange={e => setTransferForm({...transferForm, notes: e.target.value})} rows={3} />
+                <textarea className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" value={transferForm.notes} onChange={e => setTransferForm({...transferForm, notes: e.target.value})} rows={3} />
               </div>
               <div className="flex gap-3 justify-end">
                 <button type="button" className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-200" onClick={() => setShowTransfer(false)}>Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]">Transfer</button>
+                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]">Transfer</button>
               </div>
             </form>
           </div>

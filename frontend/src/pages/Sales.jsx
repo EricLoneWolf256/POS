@@ -44,7 +44,7 @@ export default function Sales() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-6">
           {[
             { label: 'Total Sales', value: summary.summary.total_sales, color: 'text-slate-800' },
-            { label: 'Revenue', value: formatCurrency(summary.summary.total_revenue, user?.currency), color: 'text-emerald-600' },
+            { label: 'Revenue', value: formatCurrency(summary.summary.total_revenue, user?.currency), color: 'text-amber-600' },
             { label: 'Avg Sale', value: formatCurrency(summary.summary.avg_sale, user?.currency), color: 'text-blue-600' },
           ].map((s, i) => (
             <div key={s.label} className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm shadow-slate-200/50 animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}>
@@ -130,7 +130,7 @@ export default function Sales() {
                   <td className="py-3 px-4 text-sm text-slate-600">{s.cashier_first} {s.cashier_last}</td>
                   <td className="py-3 px-4 text-sm text-slate-500">{s.branch_name}</td>
                   <td className="py-3 px-4 text-sm text-slate-400">{formatDate(s.created_at)}</td>
-                  <td className="py-3 px-4"><span className="inline-flex px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-semibold ring-1 ring-emerald-100/50">{s.status}</span></td>
+                  <td className="py-3 px-4"><span className="inline-flex px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-xs font-semibold ring-1 ring-amber-100/50">{s.status}</span></td>
                 </tr>
               ))}
             </tbody>

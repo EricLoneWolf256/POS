@@ -4,10 +4,25 @@ import jwt from 'jsonwebtoken';
 import pool from '../config/database.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/helpers.js';
+import { auditLog } from '../middleware/audit.js';
+import {
+  handleValidation,
+  validateEmail,
+  validateRequiredString,
+  validateEnum,
+  validateIdParam,
+} from '../middleware/validation.js';
+import { body } from 'express-validator';
 
 const router = express.Router();
 
-router.post('/login', asyncHandler(async (req, res) => {
+const VALID_ROLES = ['owner', 'admin', 'manager', 'cashier', 'field_sales', 'viewer'];
+
+router.post('/login', [
+  validateEmail('email'),
+  body('password').notEmpty().withMessage('Password is required'),
+  handleValidation,
+], asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   const [users] = await pool.query(`
@@ -28,10 +43,12 @@ router.post('/login', asyncHandler(async (req, res) => {
   const user = users[0];
   const valid = await bcrypt.compare(password, user.password_hash);
   if (!valid) {
+    auditLog(user.business_id, user.id, 'login_failed', 'user', user.id, { ip: req.ip });
     return res.status(401).json({ error: 'Invalid email or password' });
   }
 
   await pool.query('UPDATE users SET last_login = NOW() WHERE id = ?', [user.id]);
+  auditLog(user.business_id, user.id, 'login', 'user', user.id, { ip: req.ip });
 
   const planFeatures = typeof user.plan_features === 'string'
     ? JSON.parse(user.plan_features)
@@ -113,9 +130,14 @@ router.get('/branches', authenticate, asyncHandler(async (req, res) => {
   res.json(branches);
 }));
 
-router.post('/branches', authenticate, authorize('owner', 'admin'), asyncHandler(async (req, res) => {
+router.post('/branches', authenticate, authorize('owner', 'admin'), [
+  validateRequiredString('name', 1, 255),
+  body('code').optional({ values: 'null' }).trim().isLength({ max: 50 }).escape(),
+  body('address').optional({ values: 'null' }).trim().isLength({ max: 500 }).escape(),
+  body('phone').optional({ values: 'null' }).trim().isLength({ max: 50 }).escape(),
+  handleValidation,
+], asyncHandler(async (req, res) => {
   const { name, code, address, phone } = req.body;
-  if (!name) return res.status(400).json({ error: 'Branch name is required' });
 
   const [existing] = await pool.query(
     'SELECT id FROM branches WHERE business_id = ? AND (name = ? OR code = ?)',
@@ -130,11 +152,20 @@ router.post('/branches', authenticate, authorize('owner', 'admin'), asyncHandler
     VALUES (?, ?, ?, ?, ?)
   `, [req.user.businessId, name, code, address, phone]);
 
+  auditLog(req.user.businessId, req.user.id, 'create', 'branch', result.insertId, { name, ip: req.ip });
+
   const [branch] = await pool.query('SELECT * FROM branches WHERE id = ?', [result.insertId]);
   res.status(201).json(branch[0]);
 }));
 
-router.put('/branches/:id', authenticate, authorize('owner', 'admin'), asyncHandler(async (req, res) => {
+router.put('/branches/:id', authenticate, authorize('owner', 'admin'), [
+  ...validateIdParam('id'),
+  validateRequiredString('name', 1, 255),
+  body('code').optional({ values: 'null' }).trim().isLength({ max: 50 }).escape(),
+  body('address').optional({ values: 'null' }).trim().isLength({ max: 500 }).escape(),
+  body('phone').optional({ values: 'null' }).trim().isLength({ max: 50 }).escape(),
+  handleValidation,
+], asyncHandler(async (req, res) => {
   const { name, code, address, phone } = req.body;
   const branchId = req.params.id;
 
@@ -151,11 +182,13 @@ router.put('/branches/:id', authenticate, authorize('owner', 'admin'), asyncHand
     WHERE id = ? AND business_id = ?
   `, [name, code, address, phone, branchId, req.user.businessId]);
 
+  auditLog(req.user.businessId, req.user.id, 'update', 'branch', branchId, { name, ip: req.ip });
+
   const [branch] = await pool.query('SELECT * FROM branches WHERE id = ?', [branchId]);
   res.json(branch[0]);
 }));
 
-router.delete('/branches/:id', authenticate, authorize('owner'), asyncHandler(async (req, res) => {
+router.delete('/branches/:id', authenticate, authorize('owner'), [...validateIdParam('id'), handleValidation], asyncHandler(async (req, res) => {
   const branchId = req.params.id;
 
   const [branch] = await pool.query(
@@ -179,12 +212,15 @@ router.delete('/branches/:id', authenticate, authorize('owner'), asyncHandler(as
   }
 
   await pool.query('UPDATE branches SET is_active = FALSE WHERE id = ?', [branchId]);
+  auditLog(req.user.businessId, req.user.id, 'delete', 'branch', branchId, { ip: req.ip });
   res.json({ success: true });
 }));
 
-router.post('/switch-branch', authenticate, asyncHandler(async (req, res) => {
+router.post('/switch-branch', authenticate, [
+  body('branchId').isInt({ min: 1 }).withMessage('branchId must be a positive integer'),
+  handleValidation,
+], asyncHandler(async (req, res) => {
   const { branchId } = req.body;
-  if (!branchId) return res.status(400).json({ error: 'branchId is required' });
 
   const [branch] = await pool.query(
     'SELECT id, name FROM branches WHERE id = ? AND business_id = ? AND is_active = TRUE',
@@ -209,6 +245,8 @@ router.post('/switch-branch', authenticate, asyncHandler(async (req, res) => {
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
+
+  auditLog(req.user.businessId, req.user.id, 'switch_branch', 'user', req.user.id, { branchId, ip: req.ip });
 
   res.json({ token, branchId: parseInt(branchId), branchName: branch[0].name });
 }));

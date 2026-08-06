@@ -61,7 +61,7 @@ export default function NotificationBell() {
               <h3 className="font-bold text-sm text-slate-800">Notifications</h3>
               <div className="flex items-center gap-2">
                 {unread > 0 && (
-                  <button onClick={markAllRead} className="text-[11px] text-teal-600 hover:text-teal-700 font-semibold">Mark all read</button>
+                  <button onClick={markAllRead} className="text-[11px] text-orange-600 hover:text-orange-700 font-semibold">Mark all read</button>
                 )}
                 <button onClick={() => setOpen(false)} className="p-1 text-slate-400 hover:text-slate-600 rounded"><X size={14} /></button>
               </div>
@@ -71,14 +71,14 @@ export default function NotificationBell() {
                 <div className="py-8 text-center text-sm text-slate-400">No notifications yet</div>
               ) : (
                 notifications.slice(0, 20).map(n => (
-                  <div key={n.id} onClick={() => n.status === 'pending' && markRead(n.id)} className={`flex items-start gap-3 px-4 py-3 border-b border-slate-50 cursor-pointer transition-colors ${n.status === 'pending' ? 'bg-teal-50/30 hover:bg-teal-50/50' : 'hover:bg-slate-50'}`}>
+                  <div key={n.id} onClick={() => n.status === 'pending' && markRead(n.id)} className={`flex items-start gap-3 px-4 py-3 border-b border-slate-50 cursor-pointer transition-colors ${n.status === 'pending' ? 'bg-orange-50/30 hover:bg-orange-50/50' : 'hover:bg-slate-50'}`}>
                     <div className="mt-0.5 shrink-0">{getIcon(n.type)}</div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-slate-700 truncate">{n.subject || 'Notification'}</p>
                       <p className="text-xs text-slate-400 truncate mt-0.5">{n.message}</p>
                       <p className="text-[10px] text-slate-300 mt-1">{new Date(n.created_at).toLocaleString()}</p>
                     </div>
-                    {n.status === 'pending' && <div className="w-2 h-2 bg-teal-500 rounded-full shrink-0 mt-2" />}
+                    {n.status === 'pending' && <div className="w-2 h-2 bg-orange-500 rounded-full shrink-0 mt-2" />}
                   </div>
                 ))
               )}

@@ -19,7 +19,7 @@ export default function ResetPassword() {
           <AlertCircle size={48} className="text-red-400 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-slate-800 mb-2">Invalid reset link</h2>
           <p className="text-sm text-slate-500 mb-4">This password reset link is invalid or missing.</p>
-          <Link to="/forgot-password" className="text-sm font-semibold text-teal-600 hover:text-teal-700">Request a new link</Link>
+          <Link to="/forgot-password" className="text-sm font-semibold text-orange-600 hover:text-orange-700">Request a new link</Link>
         </div>
       </div>
     );
@@ -47,7 +47,7 @@ export default function ResetPassword() {
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
       <div className="w-full max-w-md animate-fade-in">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/20">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
             <span className="text-white font-bold text-lg">V</span>
           </div>
           <span className="font-bold text-slate-800">Venderra</span>
@@ -56,12 +56,12 @@ export default function ResetPassword() {
         <div className="bg-white rounded-2xl p-8 shadow-sm shadow-slate-200/50 border border-slate-200/80">
           {success ? (
             <div className="text-center animate-fade-in">
-              <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle2 size={28} className="text-emerald-500" />
+              <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 size={28} className="text-amber-500" />
               </div>
               <h2 className="text-xl font-bold text-slate-800 mb-2">Password reset!</h2>
               <p className="text-sm text-slate-500 mb-6">Your password has been updated. You can now sign in.</p>
-              <Link to="/login" className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:shadow-xl transition-all active:scale-[0.98]">
+              <Link to="/login" className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:shadow-xl transition-all active:scale-[0.98]">
                 Sign in
               </Link>
             </div>
@@ -77,17 +77,17 @@ export default function ResetPassword() {
                   <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">New password</label>
                   <div className="relative">
                     <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input type="password" className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} placeholder="At least 6 characters" />
+                    <input type="password" className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} placeholder="At least 6 characters" />
                   </div>
                 </div>
                 <div className="mb-6">
                   <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Confirm password</label>
                   <div className="relative">
                     <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input type="password" className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10" value={confirm} onChange={e => setConfirm(e.target.value)} required minLength={6} placeholder="Re-enter password" />
+                    <input type="password" className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10" value={confirm} onChange={e => setConfirm(e.target.value)} required minLength={6} placeholder="Re-enter password" />
                   </div>
                 </div>
-                <button type="submit" disabled={loading} className="w-full py-3 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:shadow-xl transition-all active:scale-[0.98] disabled:opacity-50">
+                <button type="submit" disabled={loading} className="w-full py-3 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:shadow-xl transition-all active:scale-[0.98] disabled:opacity-50">
                   {loading ? 'Resetting...' : 'Reset Password'}
                 </button>
               </form>

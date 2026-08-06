@@ -14,15 +14,15 @@ export default function Dashboard() {
 
   if (!data) return (
     <div className="flex flex-col items-center justify-center py-24 gap-3">
-      <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center animate-pulse">
-        <div className="w-4 h-4 rounded bg-teal-400" />
+      <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center animate-pulse">
+        <div className="w-4 h-4 rounded bg-orange-400" />
       </div>
       <p className="text-sm text-slate-400 font-medium">Loading dashboard...</p>
     </div>
   );
 
   const stats = [
-    { label: "Today's Revenue", value: formatCurrency(data.today.revenue, user?.currency), icon: DollarSign, color: 'text-emerald-600', bg: 'bg-emerald-50', ring: 'ring-emerald-100' },
+    { label: "Today's Revenue", value: formatCurrency(data.today.revenue, user?.currency), icon: DollarSign, color: 'text-amber-600', bg: 'bg-amber-50', ring: 'ring-amber-100' },
     { label: "Today's Sales", value: data.today.count, icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-50', ring: 'ring-blue-100' },
     { label: 'Products', value: data.products, icon: Package, color: 'text-amber-600', bg: 'bg-amber-50', ring: 'ring-amber-100' },
     { label: 'Low Stock Alerts', value: data.lowStockAlerts, icon: AlertTriangle, color: 'text-rose-600', bg: 'bg-rose-50', ring: 'ring-rose-100' },
@@ -62,15 +62,15 @@ export default function Dashboard() {
               <XAxis dataKey="date" tickFormatter={d => new Date(d).toLocaleDateString('en-UG', { weekday: 'short' })} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
               <YAxis tickFormatter={v => `${(v/1000).toFixed(0)}k`} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
               <Tooltip
-                cursor={{ fill: 'rgba(20,184,166,0.05)' }}
+                cursor={{ fill: 'rgba(249,115,22,0.05)' }}
                 contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}
                 formatter={(v) => formatCurrency(v, user?.currency)}
               />
               <Bar dataKey="revenue" fill="url(#barGradient)" radius={[6, 6, 0, 0]} />
               <defs>
                 <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#14b8a6" />
-                  <stop offset="100%" stopColor="#0d9488" />
+                  <stop offset="0%" stopColor="#f97316" />
+                  <stop offset="100%" stopColor="#ea580c" />
                 </linearGradient>
               </defs>
             </BarChart>

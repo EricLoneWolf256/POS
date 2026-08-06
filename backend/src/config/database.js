@@ -10,8 +10,9 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'venderra_pos',
   waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
+  connectionLimit: 50,
+  queueLimit: 100,
+  connectTimeout: 10000,
   timezone: '+03:00',
 });
 

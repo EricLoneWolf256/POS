@@ -47,7 +47,7 @@ export default function Customers() {
     <div className="animate-fade-in">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-slate-800">Customers</h1>
-        <button className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:shadow-xl hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]" onClick={openAdd}>
+        <button className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:shadow-xl hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]" onClick={openAdd}>
           <Plus size={18} /> Add Customer
         </button>
       </div>
@@ -55,7 +55,7 @@ export default function Customers() {
       <div className="relative mb-6">
         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
-          className="w-full pl-11 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white shadow-sm focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 placeholder:text-slate-400"
+          className="w-full pl-11 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white shadow-sm focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200 placeholder:text-slate-400"
           placeholder="Search by name, phone, or email..."
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -84,11 +84,11 @@ export default function Customers() {
                   <td className="py-3.5 px-5 text-sm text-slate-500">{c.email || '—'}</td>
                   <td className="py-3.5 px-5 text-sm text-slate-600">{formatCurrency(c.credit_limit, 'UGX')}</td>
                   <td className="py-3.5 px-5">
-                    <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold ${c.credit_balance > 0 ? 'bg-amber-50 text-amber-600 ring-1 ring-amber-100/50' : 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100/50'}`}>
+                    <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold ${c.credit_balance > 0 ? 'bg-amber-50 text-amber-600 ring-1 ring-amber-100/50' : 'bg-amber-50 text-amber-600 ring-1 ring-amber-100/50'}`}>
                       {formatCurrency(c.credit_balance, 'UGX')}
                     </span>
                   </td>
-                  <td className="py-3.5 px-5"><span className="inline-flex px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-semibold ring-1 ring-emerald-100/50">Active</span></td>
+                  <td className="py-3.5 px-5"><span className="inline-flex px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-xs font-semibold ring-1 ring-amber-100/50">Active</span></td>
                   <td className="py-3.5 px-5 text-right">
                     <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" onClick={() => openEdit(c)}>
                       <Edit2 size={15} />
@@ -117,29 +117,29 @@ export default function Customers() {
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
                 <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Name *</label>
-                <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200" value={form.name} onChange={e => setForm({...form, name: e.target.value})} required />
+                <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" value={form.name} onChange={e => setForm({...form, name: e.target.value})} required />
               </div>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Phone</label>
-                  <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+                  <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
                 </div>
                 <div>
                   <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Email</label>
-                  <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200" type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
+                  <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
                 </div>
               </div>
               <div className="mb-4">
                 <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Address</label>
-                <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200" value={form.address} onChange={e => setForm({...form, address: e.target.value})} />
+                <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" value={form.address} onChange={e => setForm({...form, address: e.target.value})} />
               </div>
               <div className="mb-6">
                 <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Credit Limit (UGX)</label>
-                <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200" type="number" value={form.creditLimit} onChange={e => setForm({...form, creditLimit: e.target.value})} />
+                <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" type="number" value={form.creditLimit} onChange={e => setForm({...form, creditLimit: e.target.value})} />
               </div>
               <div className="flex gap-3 justify-end">
                 <button type="button" className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-200" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 active:scale-[0.98]">Save</button>
+                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]">Save</button>
               </div>
             </form>
           </div>

@@ -3,10 +3,32 @@ import pool from '../config/database.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { asyncHandler, generateSaleNumber } from '../utils/helpers.js';
 import { generateReceipt } from '../services/pdf.js';
+import { auditLog } from '../middleware/audit.js';
+import {
+  handleValidation,
+  validateEnum,
+  validateOptionalPositiveNumber,
+  validateOptionalString,
+  validateISODate,
+  validateIdParam,
+} from '../middleware/validation.js';
+import { body, query } from 'express-validator';
+
+const PAYMENT_METHODS = ['cash', 'mobile_money', 'card', 'bank_transfer', 'credit', 'mixed'];
+const SALE_STATUSES = ['completed', 'pending', 'cancelled', 'refunded'];
 
 const router = express.Router();
 
-router.get('/', authenticate, asyncHandler(async (req, res) => {
+router.get('/', authenticate, [
+  query('startDate').optional({ values: 'null' }).isISO8601().withMessage('startDate must be a valid date'),
+  query('endDate').optional({ values: 'null' }).isISO8601().withMessage('endDate must be a valid date'),
+  query('branchId').optional({ values: 'null' }).isInt({ min: 1 }).withMessage('branchId must be a positive integer'),
+  query('cashierId').optional({ values: 'null' }).isInt({ min: 1 }).withMessage('cashierId must be a positive integer'),
+  query('status').optional({ values: 'null' }).isIn(SALE_STATUSES).withMessage(`status must be one of: ${SALE_STATUSES.join(', ')}`),
+  query('page').optional().isInt({ min: 1 }).withMessage('page must be a positive integer'),
+  query('limit').optional().isInt({ min: 1, max: 200 }).withMessage('limit must be between 1 and 200'),
+  handleValidation,
+], asyncHandler(async (req, res) => {
   const { startDate, endDate, branchId, cashierId, status, page = 1, limit = 50 } = req.query;
   const offset = (page - 1) * limit;
 
@@ -28,7 +50,7 @@ router.get('/', authenticate, asyncHandler(async (req, res) => {
   if (status) { query += ' AND s.status = ?'; params.push(status); }
 
   query += ' ORDER BY s.created_at DESC LIMIT ? OFFSET ?';
-  params.push(parseInt(limit), parseInt(offset));
+  params.push(parseInt(limit) || 50, parseInt(offset) || 0);
 
   const [sales] = await pool.query(query, params);
 
@@ -77,7 +99,7 @@ router.get('/reports/summary', authenticate, asyncHandler(async (req, res) => {
   res.json({ summary: summary[0], topProducts, cashierPerformance: cashierPerf });
 }));
 
-router.get('/:id', authenticate, asyncHandler(async (req, res) => {
+router.get('/:id', authenticate, [...validateIdParam('id'), handleValidation], asyncHandler(async (req, res) => {
   const [sales] = await pool.query(`
     SELECT s.*, u.first_name as cashier_first, u.last_name as cashier_last,
            c.name as customer_name, c.phone as customer_phone, b.name as branch_name
@@ -94,13 +116,28 @@ router.get('/:id', authenticate, asyncHandler(async (req, res) => {
   res.json({ ...sales[0], items });
 }));
 
-router.post('/', authenticate, asyncHandler(async (req, res) => {
+router.post('/', authenticate, [
+  body('items').isArray({ min: 1 }).withMessage('Sale must have at least one item'),
+  body('items.*.productId').isInt({ min: 1 }).withMessage('Each item must have a valid productId'),
+  body('items.*.productName').isString().trim().notEmpty().withMessage('Each item must have a productName'),
+  body('items.*.quantity').isFloat({ min: 0.01 }).withMessage('Each item quantity must be positive'),
+  body('items.*.unitPrice').isFloat({ min: 0 }).withMessage('Each item unitPrice must be non-negative'),
+  body('items.*.discount').optional().isFloat({ min: 0 }).withMessage('Discount must be non-negative'),
+  body('items.*.taxAmount').optional().isFloat({ min: 0 }).withMessage('Tax amount must be non-negative'),
+  validateEnum('paymentMethod', PAYMENT_METHODS),
+  validateOptionalPositiveNumber('amountPaid'),
+  validateOptionalPositiveNumber('discountAmount'),
+  validateOptionalString('notes', 500),
+  body('isCredit').optional().isBoolean(),
+  body('customerId').optional({ values: 'null' }).isInt({ min: 1 }),
+  body('branchId').optional({ values: 'null' }).isInt({ min: 1 }),
+  body('offlineId').optional({ values: 'null' }).isString().trim().isLength({ max: 100 }),
+  handleValidation,
+], asyncHandler(async (req, res) => {
   const {
     items, customerId, paymentMethod, amountPaid, discountAmount = 0,
     notes, isCredit, branchId, offlineId, paymentDetails
   } = req.body;
-
-  if (!items?.length) return res.status(400).json({ error: 'Sale must have at least one item' });
 
   const saleBranchId = branchId || req.user.branchId;
   const conn = await pool.getConnection();
@@ -139,7 +176,8 @@ router.post('/', authenticate, asyncHandler(async (req, res) => {
     }
 
     const totalAmount = subtotal + taxAmount - discountAmount;
-    const changeAmount = Math.max(0, (amountPaid || totalAmount) - totalAmount);
+    const actualAmountPaid = (amountPaid !== undefined && amountPaid !== null) ? amountPaid : totalAmount;
+    const changeAmount = Math.max(0, actualAmountPaid - totalAmount);
     const saleNumber = generateSaleNumber();
 
     const [saleResult] = await conn.query(`
@@ -148,10 +186,10 @@ router.post('/', authenticate, asyncHandler(async (req, res) => {
         is_credit, notes, offline_id, synced_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
     `, [
-      req.user.businessId, saleBranchId, saleNumber, customerId, req.user.id,
-      subtotal, taxAmount, discountAmount, totalAmount, amountPaid || totalAmount,
+      req.user.businessId, saleBranchId, saleNumber, customerId || null, req.user.id,
+      subtotal, taxAmount, discountAmount, totalAmount, actualAmountPaid,
       changeAmount, paymentMethod || 'cash', JSON.stringify(paymentDetails || {}),
-      isCredit || false, notes, offlineId
+      isCredit || false, notes || null, offlineId || null
     ]);
 
     const saleId = saleResult.insertId;
@@ -161,7 +199,7 @@ router.post('/', authenticate, asyncHandler(async (req, res) => {
       await conn.query(`
         INSERT INTO sale_items (sale_id, product_id, variation_id, product_name, quantity, unit_price, discount, tax_amount, total)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [saleId, item.productId, item.variationId, item.productName, item.quantity, item.unitPrice, item.discount || 0, item.taxAmount || 0, lineTotal]);
+      `, [saleId, item.productId, item.variationId || null, item.productName, item.quantity, item.unitPrice, item.discount || 0, item.taxAmount || 0, lineTotal]);
     }
 
     if (isCredit && customerId) {
@@ -172,6 +210,8 @@ router.post('/', authenticate, asyncHandler(async (req, res) => {
     }
 
     await conn.commit();
+
+    auditLog(req.user.businessId, req.user.id, 'create', 'sale', saleId, { saleNumber, totalAmount, paymentMethod, ip: req.ip });
 
     const [sale] = await pool.query('SELECT * FROM sales WHERE id = ?', [saleId]);
     const [saleItems] = await pool.query('SELECT * FROM sale_items WHERE sale_id = ?', [saleId]);
@@ -186,7 +226,7 @@ router.post('/', authenticate, asyncHandler(async (req, res) => {
   }
 }));
 
-router.get('/:id/receipt', authenticate, asyncHandler(async (req, res) => {
+router.get('/:id/receipt', authenticate, [...validateIdParam('id'), handleValidation], asyncHandler(async (req, res) => {
   const [sales] = await pool.query(`
     SELECT s.*, u.first_name as cashier_first, u.last_name as cashier_last,
            c.name as customer_name, b.name as branch_name

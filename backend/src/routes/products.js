@@ -2,6 +2,17 @@ import express from 'express';
 import pool from '../config/database.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/helpers.js';
+import { auditLog } from '../middleware/audit.js';
+import {
+  handleValidation,
+  validateRequiredString,
+  validateOptionalString,
+  validatePositiveNumber,
+  validateOptionalPositiveNumber,
+  validateBoolean,
+  validateIdParam,
+} from '../middleware/validation.js';
+import { body } from 'express-validator';
 
 const router = express.Router();
 
@@ -65,7 +76,7 @@ router.get('/barcode/:code', authenticate, asyncHandler(async (req, res) => {
   res.json(products[0]);
 }));
 
-router.get('/:id', authenticate, asyncHandler(async (req, res) => {
+router.get('/:id', authenticate, [...validateIdParam('id'), handleValidation], asyncHandler(async (req, res) => {
   const [products] = await pool.query(
     'SELECT p.*, c.name as category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.id = ? AND p.business_id = ?',
     [req.params.id, req.user.businessId]
@@ -86,7 +97,21 @@ router.get('/:id', authenticate, asyncHandler(async (req, res) => {
   res.json({ ...products[0], variations, stock });
 }));
 
-router.post('/', authenticate, authorize('owner', 'admin', 'manager'), asyncHandler(async (req, res) => {
+router.post('/', authenticate, authorize('owner', 'admin', 'manager'), [
+  validateRequiredString('name', 1, 255),
+  validateOptionalString('sku', 100),
+  validateOptionalString('barcode', 100),
+  validateOptionalString('description', 1000),
+  validateOptionalString('unit', 50),
+  body('categoryId').optional({ values: 'null' }).isInt({ min: 1 }).withMessage('categoryId must be a positive integer'),
+  body('costPrice').optional({ values: 'null' }).isFloat({ min: 0 }).withMessage('costPrice must be non-negative'),
+  body('sellingPrice').isFloat({ min: 0.01 }).withMessage('sellingPrice must be a positive number'),
+  body('lowStockThreshold').optional({ values: 'null' }).isInt({ min: 0 }).withMessage('lowStockThreshold must be non-negative'),
+  body('trackStock').optional().isBoolean().withMessage('trackStock must be a boolean'),
+  body('initialStock').optional({ values: 'null' }).isFloat({ min: 0 }).withMessage('initialStock must be non-negative'),
+  body('variations').optional().isArray().withMessage('variations must be an array'),
+  handleValidation,
+], asyncHandler(async (req, res) => {
   const { name, sku, barcode, categoryId, costPrice, sellingPrice, unit, lowStockThreshold, description, trackStock, variations, initialStock } = req.body;
 
   const [planCheck] = await pool.query(`
@@ -107,7 +132,7 @@ router.post('/', authenticate, authorize('owner', 'admin', 'manager'), asyncHand
     const [result] = await conn.query(`
       INSERT INTO products (business_id, category_id, name, sku, barcode, cost_price, selling_price, unit, low_stock_threshold, description, track_stock, has_variations)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [req.user.businessId, categoryId, name, sku, barcode, costPrice || 0, sellingPrice, unit || 'pcs', lowStockThreshold || 10, description, trackStock !== false, !!variations?.length]);
+    `, [req.user.businessId, categoryId || null, name, sku || null, barcode || null, costPrice || 0, sellingPrice, unit || 'pcs', lowStockThreshold || 10, description || null, trackStock !== false, !!variations?.length]);
 
     const productId = result.insertId;
 
@@ -128,6 +153,9 @@ router.post('/', authenticate, authorize('owner', 'admin', 'manager'), asyncHand
     }
 
     await conn.commit();
+
+    auditLog(req.user.businessId, req.user.id, 'create', 'product', productId, { name, ip: req.ip });
+
     const [product] = await pool.query('SELECT * FROM products WHERE id = ?', [productId]);
     res.status(201).json(product[0]);
   } catch (err) {
@@ -138,29 +166,73 @@ router.post('/', authenticate, authorize('owner', 'admin', 'manager'), asyncHand
   }
 }));
 
-router.put('/:id', authenticate, authorize('owner', 'admin', 'manager'), asyncHandler(async (req, res) => {
+router.put('/:id', authenticate, authorize('owner', 'admin', 'manager'), [
+  ...validateIdParam('id'),
+  validateRequiredString('name', 1, 255),
+  validateOptionalString('sku', 100),
+  validateOptionalString('barcode', 100),
+  validateOptionalString('description', 1000),
+  validateOptionalString('unit', 50),
+  body('categoryId').optional({ values: 'null' }).isInt({ min: 1 }).withMessage('categoryId must be a positive integer'),
+  body('costPrice').optional({ values: 'null' }).isFloat({ min: 0 }).withMessage('costPrice must be non-negative'),
+  body('sellingPrice').isFloat({ min: 0.01 }).withMessage('sellingPrice must be a positive number'),
+  body('lowStockThreshold').optional({ values: 'null' }).isInt({ min: 0 }).withMessage('lowStockThreshold must be non-negative'),
+  body('isActive').optional().isBoolean().withMessage('isActive must be a boolean'),
+  handleValidation,
+], asyncHandler(async (req, res) => {
   const { name, sku, barcode, categoryId, costPrice, sellingPrice, unit, lowStockThreshold, description, isActive } = req.body;
 
   await pool.query(`
     UPDATE products SET name=?, sku=?, barcode=?, category_id=?, cost_price=?, selling_price=?,
     unit=?, low_stock_threshold=?, description=?, is_active=?
     WHERE id=? AND business_id=?
-  `, [name, sku, barcode, categoryId, costPrice, sellingPrice, unit, lowStockThreshold, description, isActive !== false, req.params.id, req.user.businessId]);
+  `, [name, sku || null, barcode || null, categoryId || null, costPrice || 0, sellingPrice, unit || 'pcs', lowStockThreshold || 10, description || null, isActive !== false, req.params.id, req.user.businessId]);
+
+  auditLog(req.user.businessId, req.user.id, 'update', 'product', req.params.id, { name, ip: req.ip });
 
   const [product] = await pool.query('SELECT * FROM products WHERE id = ?', [req.params.id]);
   res.json(product[0]);
 }));
 
-router.post('/categories', authenticate, authorize('owner', 'admin', 'manager'), asyncHandler(async (req, res) => {
+router.post('/categories', authenticate, authorize('owner', 'admin', 'manager'), [
+  validateRequiredString('name', 1, 255),
+  validateOptionalString('description', 500),
+  body('parentId').optional({ values: 'null' }).isInt({ min: 1 }).withMessage('parentId must be a positive integer'),
+  handleValidation,
+], asyncHandler(async (req, res) => {
   const { name, description, parentId } = req.body;
   const [result] = await pool.query(
     'INSERT INTO categories (business_id, name, description, parent_id) VALUES (?, ?, ?, ?)',
-    [req.user.businessId, name, description, parentId]
+    [req.user.businessId, name, description || null, parentId || null]
   );
+
+  auditLog(req.user.businessId, req.user.id, 'create', 'category', result.insertId, { name, ip: req.ip });
+
   res.status(201).json({ id: result.insertId, name, description });
 }));
 
-router.post('/barcode/generate', authenticate, asyncHandler(async (req, res) => {
+router.delete('/:id', authenticate, authorize('owner', 'admin', 'manager'), [...validateIdParam('id'), handleValidation], asyncHandler(async (req, res) => {
+  const [products] = await pool.query(
+    'SELECT id FROM products WHERE id = ? AND business_id = ?',
+    [req.params.id, req.user.businessId]
+  );
+  if (products.length === 0) return res.status(404).json({ error: 'Product not found' });
+
+  // Soft-delete: mark inactive rather than hard delete to preserve sales history
+  await pool.query(
+    'UPDATE products SET is_active = FALSE WHERE id = ? AND business_id = ?',
+    [req.params.id, req.user.businessId]
+  );
+
+  auditLog(req.user.businessId, req.user.id, 'delete', 'product', req.params.id, { ip: req.ip });
+
+  res.json({ message: 'Product deleted successfully' });
+}));
+
+router.post('/barcode/generate', authenticate, [
+  body('productId').isInt({ min: 1 }).withMessage('productId must be a positive integer'),
+  handleValidation,
+], asyncHandler(async (req, res) => {
   const { productId } = req.body;
   const barcode = `890${Date.now().toString().slice(-10)}`;
   await pool.query('UPDATE products SET barcode = ? WHERE id = ? AND business_id = ?', [barcode, productId, req.user.businessId]);

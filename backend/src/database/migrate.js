@@ -1,110 +1,115 @@
-import mysql from 'mysql2/promise';
+/**
+ * Migration: Add super_admin role + create the platform owner account
+ *
+ * Run once on any existing database:
+ *   node src/database/migrate.js
+ *
+ * The super-admin credentials are read from env vars:
+ *   SUPER_ADMIN_EMAIL    (default: superadmin@venderra.ug)
+ *   SUPER_ADMIN_PASSWORD (default: changeme123 — CHANGE THIS IMMEDIATELY)
+ */
+
+import bcrypt from 'bcryptjs';
+import pool from '../config/database.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const conn = await mysql.createConnection({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  multipleStatements: true,
+async function migrate() {
+  const conn = await pool.getConnection();
+  console.log('Running Venderra migrations...');
+
+  try {
+    await conn.beginTransaction();
+
+    // 1. Extend the users.role ENUM to include super_admin
+    await conn.query(`
+      ALTER TABLE users
+      MODIFY COLUMN role ENUM('super_admin','owner','admin','manager','cashier','field_sales','viewer')
+      DEFAULT 'cashier'
+    `);
+    console.log('✓ users.role ENUM updated with super_admin');
+
+    // 2. Ensure businesses table has both trial and subscription columns
+    const [bizCols] = await conn.query(`
+      SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'businesses'
+    `);
+    const colNames = bizCols.map(c => c.COLUMN_NAME);
+
+    if (!colNames.includes('trial_ends_at')) {
+      await conn.query(`ALTER TABLE businesses ADD COLUMN trial_ends_at TIMESTAMP NULL AFTER plan_id`);
+      console.log('✓ businesses.trial_ends_at added');
+    }
+    if (!colNames.includes('subscription_expires_at')) {
+      await conn.query(`ALTER TABLE businesses ADD COLUMN subscription_expires_at TIMESTAMP NULL AFTER trial_ends_at`);
+      console.log('✓ businesses.subscription_expires_at added');
+    }
+
+    // 3. Create or update the super-admin system business (id=0 trick won't work with FK,
+    //    so we use a dedicated "Venderra Platform" business that is_active=TRUE always)
+    const [existingSA] = await conn.query(
+      `SELECT id FROM users WHERE role = 'super_admin' LIMIT 1`
+    );
+
+    if (existingSA.length > 0) {
+      console.log('✓ Super-admin user already exists — skipping creation');
+    } else {
+      // Create a platform business to house the super-admin user
+      let platformBizId;
+      const [existingPlatform] = await conn.query(
+        `SELECT id FROM businesses WHERE slug = 'venderra-platform' LIMIT 1`
+      );
+
+      if (existingPlatform.length > 0) {
+        platformBizId = existingPlatform[0].id;
+      } else {
+        const [planRows] = await conn.query(`SELECT id FROM plans ORDER BY id DESC LIMIT 1`);
+        const topPlanId = planRows[0]?.id || 3;
+
+        const [bizResult] = await conn.query(`
+          INSERT INTO businesses (name, slug, email, plan_id, is_active, subscription_expires_at)
+          VALUES ('Venderra Platform', 'venderra-platform', 'platform@venderra.ug', ?, TRUE, DATE_ADD(NOW(), INTERVAL 100 YEAR))
+        `, [topPlanId]);
+        platformBizId = bizResult.insertId;
+
+        await conn.query(`
+          INSERT INTO branches (business_id, name, is_main) VALUES (?, 'Platform HQ', TRUE)
+        `, [platformBizId]);
+      }
+
+      const [branchRows] = await conn.query(
+        `SELECT id FROM branches WHERE business_id = ? LIMIT 1`, [platformBizId]
+      );
+      const platformBranchId = branchRows[0].id;
+
+      const saEmail = process.env.SUPER_ADMIN_EMAIL || 'superadmin@venderra.ug';
+      const saPassword = process.env.SUPER_ADMIN_PASSWORD || 'changeme123';
+      const hash = await bcrypt.hash(saPassword, 12);
+
+      await conn.query(`
+        INSERT INTO users (business_id, branch_id, email, password_hash, first_name, last_name, role)
+        VALUES (?, ?, ?, ?, 'Super', 'Admin', 'super_admin')
+      `, [platformBizId, platformBranchId, saEmail, hash]);
+
+      console.log(`✓ Super-admin created: ${saEmail} / ${saPassword}`);
+      if (saPassword === 'changeme123') {
+        console.warn('⚠  WARNING: Using default password. Set SUPER_ADMIN_PASSWORD in .env and re-run migration!');
+      }
+    }
+
+    await conn.commit();
+    console.log('\n✅  All migrations completed successfully.');
+  } catch (err) {
+    await conn.rollback();
+    console.error('Migration failed:', err.message);
+    throw err;
+  } finally {
+    conn.release();
+    process.exit(0);
+  }
+}
+
+migrate().catch(err => {
+  console.error(err);
+  process.exit(1);
 });
-
-try {
-  await conn.query(`
-    ALTER TABLE businesses
-    ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMP NULL,
-    ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMP NULL
-  `);
-  console.log('OK: businesses columns added');
-} catch (e) {
-  console.log('SKIP: businesses columns already exist or error:', e.message);
-}
-
-try {
-  await conn.query(`
-    CREATE TABLE IF NOT EXISTS password_resets (
-      id INT PRIMARY KEY AUTO_INCREMENT,
-      user_id INT NOT NULL,
-      token VARCHAR(255) NOT NULL,
-      expires_at TIMESTAMP NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-      INDEX idx_token (token)
-    )
-  `);
-  console.log('OK: password_resets table');
-} catch (e) {
-  console.log('SKIP:', e.message);
-}
-
-try {
-  await conn.query(`
-    CREATE TABLE IF NOT EXISTS payments (
-      id INT PRIMARY KEY AUTO_INCREMENT,
-      business_id INT NOT NULL,
-      plan_id INT NOT NULL,
-      amount DECIMAL(12,2) NOT NULL,
-      currency VARCHAR(10) DEFAULT 'UGX',
-      tx_ref VARCHAR(255) UNIQUE,
-      flw_id VARCHAR(255),
-      status ENUM('pending', 'completed', 'failed', 'refunded') DEFAULT 'pending',
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
-      FOREIGN KEY (plan_id) REFERENCES plans(id)
-    )
-  `);
-  console.log('OK: payments table');
-} catch (e) {
-  console.log('SKIP:', e.message);
-}
-
-try {
-  await conn.query(`
-    CREATE TABLE IF NOT EXISTS audit_logs (
-      id INT PRIMARY KEY AUTO_INCREMENT,
-      business_id INT NOT NULL,
-      user_id INT,
-      action VARCHAR(50) NOT NULL,
-      entity_type VARCHAR(50) NOT NULL,
-      entity_id INT,
-      details JSON,
-      ip_address VARCHAR(50),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
-      INDEX idx_entity (entity_type, entity_id),
-      INDEX idx_created (created_at)
-    )
-  `);
-  console.log('OK: audit_logs table');
-} catch (e) {
-  console.log('SKIP:', e.message);
-}
-
-try {
-  await conn.query(`
-    CREATE TABLE IF NOT EXISTS employee_attendance (
-      id INT PRIMARY KEY AUTO_INCREMENT,
-      business_id INT NOT NULL,
-      user_id INT NOT NULL,
-      branch_id INT NOT NULL,
-      clock_in TIMESTAMP NOT NULL,
-      clock_out TIMESTAMP NULL,
-      notes TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE CASCADE,
-      INDEX idx_user_date (user_id, clock_in)
-    )
-  `);
-  console.log('OK: employee_attendance table');
-} catch (e) {
-  console.log('SKIP:', e.message);
-}
-
-await conn.end();
-console.log('Migration complete!');

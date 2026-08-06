@@ -10,7 +10,7 @@ function ScanToast({ message, type, onDismiss }) {
   }, [onDismiss]);
 
   const styles = {
-    success: 'bg-emerald-600 text-white shadow-emerald-500/30',
+    success: 'bg-amber-600 text-white shadow-amber-500/30',
     error: 'bg-red-600 text-white shadow-red-500/30',
     info: 'bg-slate-800 text-white shadow-slate-800/30',
   };
@@ -41,10 +41,19 @@ export default function POS() {
   const [scanCount, setScanCount] = useState(0);
   const barcodeRef = useRef(null);
   const { user, isOnline } = useAuth();
+  const [customers, setCustomers] = useState([]);
+  const [selectedCustomerId, setSelectedCustomerId] = useState('');
+  const [customerSearch, setCustomerSearch] = useState('');
 
   useEffect(() => {
     loadProducts();
   }, [search]);
+
+  useEffect(() => {
+    api.get('/customers', { params: { search: customerSearch } })
+      .then(res => setCustomers(res.data))
+      .catch(() => {});
+  }, [customerSearch]);
 
   // Keep barcode input focused when not typing in search
   useEffect(() => {
@@ -156,9 +165,19 @@ export default function POS() {
 
   const completeSale = async () => {
     if (!cart.length) return;
+    if (paymentMethod === 'credit' && !selectedCustomerId) {
+      showToast('Please select a customer for credit sales', 'error');
+      return;
+    }
     setProcessing(true);
     try {
-      const payload = { items: cart, paymentMethod, amountPaid: total };
+      const payload = {
+        items: cart,
+        paymentMethod,
+        amountPaid: paymentMethod === 'credit' ? 0 : total,
+        customerId: selectedCustomerId ? parseInt(selectedCustomerId) : null,
+        isCredit: paymentMethod === 'credit',
+      };
 
       if (!isOnline) {
         const offlineId = `offline-${Date.now()}`;
@@ -174,6 +193,8 @@ export default function POS() {
       }
 
       setCart([]);
+      setSelectedCustomerId('');
+      setCustomerSearch('');
       loadProducts();
     } catch (err) {
       showToast(err.response?.data?.error || 'Sale failed', 'error');
@@ -199,10 +220,10 @@ export default function POS() {
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold tracking-tight text-slate-800">Point of Sale</h1>
           {lastSale && (
-            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-semibold ring-1 ring-emerald-200/50 animate-fade-in">
+            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-600 rounded-xl text-xs font-semibold ring-1 ring-amber-200/50 animate-fade-in">
               <Check size={13} strokeWidth={2.5} /> {lastSale.sale_number} — {formatCurrency(lastSale.total_amount, user?.currency)}
               {lastSale.offline && ' (offline)'}
-              <button onClick={async () => { try { const res = await api.get(`/sales/${lastSale.id}/receipt`, { responseType: 'blob' }); const url = URL.createObjectURL(new Blob([res.data])); const a = document.createElement('a'); a.href = url; a.download = `receipt-${lastSale.sale_number}.pdf`; a.click(); } catch {} }} className="ml-1 p-1 rounded-md hover:bg-emerald-100 transition-colors" title="Download receipt">
+              <button onClick={async () => { try { const res = await api.get(`/sales/${lastSale.id}/receipt`, { responseType: 'blob' }); const url = URL.createObjectURL(new Blob([res.data])); const a = document.createElement('a'); a.href = url; a.download = `receipt-${lastSale.sale_number}.pdf`; a.click(); } catch {} }} className="ml-1 p-1 rounded-md hover:bg-amber-100 transition-colors" title="Download receipt">
                 <FileDown size={13} />
               </button>
             </span>
@@ -214,22 +235,22 @@ export default function POS() {
       </div>
 
       {/* Barcode Scanner Input */}
-      <div className="mb-5 bg-gradient-to-r from-teal-50/80 to-emerald-50/50 rounded-2xl border border-teal-200/40 p-4">
+      <div className="mb-5 bg-gradient-to-r from-orange-50/80 to-amber-50/50 rounded-2xl border border-orange-200/40 p-4">
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-teal-600">
-            <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center ring-1 ring-teal-200/50">
+          <div className="flex items-center gap-2 text-orange-600">
+            <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center ring-1 ring-orange-200/50">
               <ScanLine size={20} />
             </div>
             <div>
-              <p className="text-[13px] font-bold text-teal-700">Scanner Input</p>
-              <p className="text-[11px] text-teal-500/70 font-medium">Scan barcode or type & press Enter</p>
+              <p className="text-[13px] font-bold text-orange-700">Scanner Input</p>
+              <p className="text-[11px] text-orange-500/70 font-medium">Scan barcode or type & press Enter</p>
             </div>
           </div>
           <div className="flex-1 relative">
             <input
               ref={barcodeRef}
               type="text"
-              className="w-full pl-4 pr-10 py-3 bg-white border border-teal-200 rounded-xl text-base font-mono font-semibold text-slate-800 tracking-wider focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/15 transition-all duration-200 placeholder:text-slate-300 placeholder:font-normal placeholder:tracking-normal shadow-sm"
+              className="w-full pl-4 pr-10 py-3 bg-white border border-orange-200 rounded-xl text-base font-mono font-semibold text-slate-800 tracking-wider focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/15 transition-all duration-200 placeholder:text-slate-300 placeholder:font-normal placeholder:tracking-normal shadow-sm"
               placeholder="Scan or enter barcode..."
               value={barcodeInput}
               onChange={e => setBarcodeInput(e.target.value)}
@@ -259,7 +280,7 @@ export default function POS() {
           <div className="relative mb-4">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
-              className="w-full pl-11 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white shadow-sm focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 placeholder:text-slate-400"
+              className="w-full pl-11 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white shadow-sm focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200 placeholder:text-slate-400"
               placeholder="Search products by name or SKU..."
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -270,14 +291,14 @@ export default function POS() {
             {products.map(p => (
               <button
                 key={p.id}
-                className={`group bg-white border border-slate-200/80 rounded-2xl p-4 cursor-pointer transition-all duration-200 text-center hover:border-teal-300 hover:shadow-md hover:shadow-teal-500/5 active:scale-[0.97] ${p.stock_quantity <= 0 ? 'opacity-40 cursor-not-allowed' : ''}`}
+                className={`group bg-white border border-slate-200/80 rounded-2xl p-4 cursor-pointer transition-all duration-200 text-center hover:border-orange-300 hover:shadow-md hover:shadow-orange-500/5 active:scale-[0.97] ${p.stock_quantity <= 0 ? 'opacity-40 cursor-not-allowed' : ''}`}
                 onClick={() => addToCart(p)}
               >
                 <div className="font-medium text-sm text-slate-700 mb-1.5 group-hover:text-slate-900 transition-colors">{p.name}</div>
                 {p.barcode && (
                   <div className="text-[10px] text-slate-400 font-mono mb-1">{p.barcode}</div>
                 )}
-                <div className="text-teal-600 font-bold text-sm">{formatCurrency(p.selling_price, user?.currency)}</div>
+                <div className="text-orange-600 font-bold text-sm">{formatCurrency(p.selling_price, user?.currency)}</div>
                 <div className={`text-[11px] mt-2 font-medium ${p.stock_quantity <= 0 ? 'text-red-400' : p.stock_quantity <= 10 ? 'text-amber-500' : 'text-slate-400'}`}>
                   {p.stock_quantity <= 0 ? 'Out of stock' : `Stock: ${p.stock_quantity}`}
                 </div>
@@ -325,13 +346,39 @@ export default function POS() {
             ))}
           </div>
           <div className="p-5 border-t border-slate-100 bg-gradient-to-b from-slate-50/50 to-white">
+            {/* Customer Selector */}
+            <div className="mb-4">
+              <label className="block text-[11px] font-semibold text-slate-500 mb-1.5 px-1 uppercase tracking-wider">Customer</label>
+              <div className="flex gap-2">
+                <select
+                  value={selectedCustomerId}
+                  onChange={e => setSelectedCustomerId(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-xs bg-white text-slate-700 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 transition-all"
+                >
+                  <option value="">Walk-in Customer</option>
+                  {customers.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} {c.phone ? `(${c.phone})` : ''} {c.credit_balance > 0 ? `[Bal: ${formatCurrency(c.credit_balance, user?.currency)}]` : ''}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  placeholder="Filter customers..."
+                  value={customerSearch}
+                  onChange={e => setCustomerSearch(e.target.value)}
+                  className="w-32 px-3 py-2 border border-slate-200 rounded-xl text-xs bg-white text-slate-700 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 transition-all"
+                />
+              </div>
+            </div>
+
             <div className="grid grid-cols-3 gap-1.5 mb-4">
               {paymentMethods.map(m => (
                 <button
                   key={m.key}
                   className={`py-2 px-2 rounded-xl text-[11px] font-semibold transition-all duration-200 ${
                     paymentMethod === m.key
-                      ? 'bg-teal-50 text-teal-700 ring-1 ring-teal-200/60 shadow-sm shadow-teal-100'
+                      ? 'bg-orange-50 text-orange-700 ring-1 ring-orange-200/60 shadow-sm shadow-orange-100'
                       : 'bg-white text-slate-500 border border-slate-200/80 hover:bg-slate-50 hover:text-slate-700'
                   }`}
                   onClick={() => setPaymentMethod(m.key)}
@@ -345,7 +392,7 @@ export default function POS() {
               <span className="text-2xl font-bold tracking-tight text-slate-800">{formatCurrency(total, user?.currency)}</span>
             </div>
             <button
-              className="w-full flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/30 hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 hover:from-orange-700 hover:to-amber-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
               onClick={completeSale}
               disabled={!cart.length || processing}
             >

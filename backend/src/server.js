@@ -4,6 +4,14 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
+dotenv.config();
+
+const unsafeSecrets = ['your-super-secret-jwt-key-change-in-production', 'venderra-dev-secret-change-in-production', ''];
+if (!process.env.JWT_SECRET || unsafeSecrets.includes(process.env.JWT_SECRET)) {
+  console.error('FATAL: JWT_SECRET is missing or uses an insecure default. Set a strong JWT_SECRET in your .env file.');
+  process.exit(1);
+}
+
 import { setupSecurity } from './middleware/security.js';
 import { errorHandler } from './utils/helpers.js';
 import authRoutes from './routes/auth.js';
@@ -26,8 +34,7 @@ import exportRoutes from './routes/exports.js';
 import notificationRoutes from './routes/notifications.js';
 import uploadRoutes from './routes/uploads.js';
 import employeeRoutes from './routes/employees.js';
-
-dotenv.config();
+import adminRoutes from './routes/admin.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -40,7 +47,7 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
 }));
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '2mb' }));
 
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
@@ -76,9 +83,10 @@ app.use('/api/exports', exportRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/employees', employeeRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`🚀 Venderra POS API running on http://localhost:${PORT}`);
+  console.log(`Venderra POS API running on http://localhost:${PORT}`);
 });
