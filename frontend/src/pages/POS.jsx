@@ -50,7 +50,7 @@ export default function POS() {
   useEffect(() => {
     api.get('/customers', { params: { search: customerSearch } })
       .then(res => setCustomers(res.data))
-      .catch(() => {});
+      .catch(() => showToast('Failed to load customers', 'error'));
   }, [customerSearch]);
 
   useEffect(() => {
@@ -191,7 +191,9 @@ export default function POS() {
                     const url = URL.createObjectURL(new Blob([res.data]));
                     const a = document.createElement('a'); a.href = url;
                     a.download = `receipt-${lastSale.sale_number}.pdf`; a.click();
-                  } catch {}
+                  } catch {
+                    showToast('Receipt download failed', 'error');
+                  }
                 }}
                 className="ml-0.5 p-0.5 rounded hover:bg-green-200 transition-colors"
                 title="Download receipt"
@@ -386,7 +388,7 @@ export default function POS() {
               onClick={completeSale}
               disabled={!cart.length || processing}
             >
-              {processing ? <span className="spinner spinner-sm" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} /> : `Complete Sale · ${formatCurrency(total, user?.currency)}`}
+              {processing ? <span className="spinner spinner-sm spinner-white" /> : `Complete Sale · ${formatCurrency(total, user?.currency)}`}
             </button>
           </div>
         </div>

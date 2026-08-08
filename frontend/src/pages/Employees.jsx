@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useState, useEffect } from 'react';
 import {
   Plus, X, Pencil, Search, Clock, LogIn, LogOut, Users,
   Key, TrendingUp, DollarSign, UserX, UserCheck, Briefcase,
@@ -7,6 +6,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import useFetch from '../hooks/useFetch';
+import { TableLoading, TableError } from '../components/TableState';
 
 const ROLE_BADGE = {
   owner:       'badge-indigo',
@@ -23,7 +24,6 @@ function fmtCurrency(n) {
 
 export default function Employees() {
   const { user } = useAuth();
-  const [employees, setEmployees] = useState([]);
   const [tab, setTab] = useState('overview');
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -32,7 +32,6 @@ export default function Employees() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', phone: '', role: 'cashier', branchId: '' });
   const [passwordForm, setPasswordForm] = useState({ newPassword: '' });
-  const [branches, setBranches] = useState([]);
   const [perfData, setPerfData] = useState(null);
   const [perfPeriod, setPerfPeriod] = useState('today');
   const [submitting, setSubmitting] = useState(false);
@@ -43,12 +42,14 @@ export default function Employees() {
     setTimeout(() => setToast(null), 3500);
   };
 
-  useEffect(() => { load(); }, []);
-
-  const load = () => {
-    api.get('/employees').then(res => setEmployees(res.data));
-    api.get('/auth/branches').then(res => setBranches(res.data));
-  };
+  const { data, loading, error, reload } = useFetch(async () => {
+    const [employeesRes, branchesRes] = await Promise.all([
+      api.get('/employees'),
+      api.get('/auth/branches'),
+    ]);
+    return { employees: employeesRes.data, branches: branchesRes.data };
+  }, []);
+  const { employees = [], branches = [] } = data || {};
 
   const filtered = employees.filter(e => {
     const term = search.toLowerCase();
@@ -83,7 +84,7 @@ export default function Employees() {
       else { await api.post('/employees', { ...payload, password: form.password }); }
       setShowModal(false);
       showToast(editing ? 'Employee updated' : 'Employee created');
-      load();
+      reload();
     } catch (err) {
       showToast(err.response?.data?.error || 'Failed to save employee', 'error');
     } finally {
@@ -112,7 +113,7 @@ export default function Employees() {
         role: emp.role, branchId: emp.branch_id, isActive: !emp.is_active,
       });
       showToast(emp.is_active ? `${emp.first_name} deactivated` : `${emp.first_name} reactivated`);
-      load();
+      reload();
     } catch (err) {
       showToast(err.response?.data?.error || 'Failed to update employee', 'error');
     }
@@ -122,7 +123,9 @@ export default function Employees() {
     try {
       const res = await api.get(`/employees/${empId}/performance?period=${perfPeriod}`);
       setPerfData(res.data);
-    } catch {}
+    } catch {
+      showToast('Failed to load performance', 'error');
+    }
   };
 
   const openPerformance = (emp) => { setShowPerformance(emp); setPerfPeriod('today'); };
@@ -210,7 +213,11 @@ export default function Employees() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(emp => (
+                {loading ? (
+                  <TableLoading colSpan={7} />
+                ) : error ? (
+                  <TableError colSpan={7} onRetry={reload} />
+                ) : filtered.map(emp => (
                   <tr key={emp.id}>
                     <td>
                       <div className="flex items-center gap-2.5">
@@ -275,7 +282,7 @@ export default function Employees() {
                     </td>
                   </tr>
                 ))}
-                {!filtered.length && (
+                {!filtered.length && !loading && !error && (
                   <tr>
                     <td colSpan={7}>
                       <div className="empty-state">
@@ -350,7 +357,7 @@ export default function Employees() {
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
                 <button type="submit" form="employee-form" className="btn btn-primary" disabled={submitting}>
-                  {submitting ? <span className="spinner spinner-sm" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} /> : null}
+                  {submitting ? <span className="spinner spinner-sm spinner-white" /> : null}
                   {editing ? 'Update' : 'Create Employee'}
                 </button>
               </div>
@@ -380,7 +387,7 @@ export default function Employees() {
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowPasswordModal(false)}>Cancel</button>
                 <button type="submit" form="password-form" className="btn btn-primary" disabled={submitting}>
-                  {submitting ? <span className="spinner spinner-sm" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} /> : null}
+                  {submitting ? <span className="spinner spinner-sm spinner-white" /> : null}
                   Reset Password
                 </button>
               </div>

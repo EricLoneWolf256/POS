@@ -1,15 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, X, ShoppingBag, Truck, DollarSign } from 'lucide-react';
 import api, { formatCurrency, formatDate } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import useFetch from '../hooks/useFetch';
+import { TableLoading, TableError } from '../components/TableState';
 
 export default function Purchases() {
   const [tab, setTab] = useState('purchases');
-  const [suppliers, setSuppliers] = useState([]);
-  const [purchases, setPurchases] = useState([]);
-  const [expenses, setExpenses] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [branches, setBranches] = useState([]);
   const [showSupplierModal, setShowSupplierModal] = useState(false);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
@@ -18,22 +15,24 @@ export default function Purchases() {
   const [expenseForm, setExpenseForm] = useState({ category: '', description: '', amount: '', paymentMethod: 'cash', expenseDate: new Date().toISOString().split('T')[0] });
   const { user } = useAuth();
 
-  useEffect(() => { load(); }, [tab]);
-
-  const load = () => {
-    api.get('/purchases/suppliers').then(res => setSuppliers(res.data));
-    api.get('/purchases/purchases').then(res => setPurchases(res.data));
-    api.get('/purchases/expenses').then(res => setExpenses(res.data));
-    api.get('/products').then(res => setProducts(res.data));
-    api.get('/auth/branches').then(res => setBranches(res.data));
-  };
+  const { data, loading, error, reload } = useFetch(async () => {
+    const [suppliers, purchases, expenses, products, branches] = await Promise.all([
+      api.get('/purchases/suppliers'),
+      api.get('/purchases/purchases'),
+      api.get('/purchases/expenses'),
+      api.get('/products'),
+      api.get('/auth/branches'),
+    ]);
+    return { suppliers: suppliers.data, purchases: purchases.data, expenses: expenses.data, products: products.data, branches: branches.data };
+  }, [tab]);
+  const { suppliers = [], purchases = [], expenses = [], products = [], branches = [] } = data || {};
 
   const handleSupplierSubmit = async (e) => {
     e.preventDefault();
     await api.post('/purchases/suppliers', supplierForm);
     setShowSupplierModal(false);
     setSupplierForm({ name: '', contactPerson: '', email: '', phone: '', address: '' });
-    load();
+    reload();
   };
 
   const addPurchaseItem = () => setPurchaseForm({ ...purchaseForm, items: [...purchaseForm.items, { productId: '', quantity: 1, unitCost: 0 }] });
@@ -64,7 +63,7 @@ export default function Purchases() {
     });
     setShowPurchaseModal(false);
     setPurchaseForm({ supplierId: '', branchId: '', notes: '', items: [{ productId: '', quantity: 1, unitCost: 0 }] });
-    load();
+    reload();
   };
 
   const handleExpenseSubmit = async (e) => {
@@ -72,7 +71,7 @@ export default function Purchases() {
     await api.post('/purchases/expenses', { ...expenseForm, amount: parseFloat(expenseForm.amount) });
     setShowExpenseModal(false);
     setExpenseForm({ category: '', description: '', amount: '', paymentMethod: 'cash', expenseDate: new Date().toISOString().split('T')[0] });
-    load();
+    reload();
   };
 
   const addActions = {
@@ -129,7 +128,11 @@ export default function Purchases() {
                 </tr>
               </thead>
               <tbody>
-                {purchases.map(p => (
+                {loading ? (
+                  <TableLoading colSpan={7} />
+                ) : error ? (
+                  <TableError colSpan={7} onRetry={reload} />
+                ) : purchases.map(p => (
                   <tr key={p.id}>
                     <td className="font-mono text-[12px] text-gray-600">{p.purchase_number}</td>
                     <td className="text-gray-600">{p.supplier_name || '—'}</td>
@@ -144,7 +147,7 @@ export default function Purchases() {
                     <td className="tabular-nums text-gray-400">{formatDate(p.created_at)}</td>
                   </tr>
                 ))}
-                {!purchases.length && (
+                {!purchases.length && !loading && !error && (
                   <tr><td colSpan={7}><div className="empty-state"><ShoppingBag size={32} className="text-gray-200" /><p>No purchases yet</p></div></td></tr>
                 )}
               </tbody>
@@ -166,7 +169,11 @@ export default function Purchases() {
                 </tr>
               </thead>
               <tbody>
-                {suppliers.map(s => (
+                {loading ? (
+                  <TableLoading colSpan={5} />
+                ) : error ? (
+                  <TableError colSpan={5} onRetry={reload} />
+                ) : suppliers.map(s => (
                   <tr key={s.id}>
                     <td className="font-medium text-gray-700">{s.name}</td>
                     <td className="text-gray-600">{s.contact_person || '—'}</td>
@@ -175,7 +182,7 @@ export default function Purchases() {
                     <td className="text-gray-500">{s.address || '—'}</td>
                   </tr>
                 ))}
-                {!suppliers.length && (
+                {!suppliers.length && !loading && !error && (
                   <tr><td colSpan={5}><div className="empty-state"><Truck size={32} className="text-gray-200" /><p>No suppliers yet</p></div></td></tr>
                 )}
               </tbody>
@@ -199,7 +206,11 @@ export default function Purchases() {
                 </tr>
               </thead>
               <tbody>
-                {expenses.map(e => (
+                {loading ? (
+                  <TableLoading colSpan={7} />
+                ) : error ? (
+                  <TableError colSpan={7} onRetry={reload} />
+                ) : expenses.map(e => (
                   <tr key={e.id}>
                     <td className="font-medium text-gray-700">{e.category}</td>
                     <td className="text-gray-600">{e.description || '—'}</td>
@@ -210,7 +221,7 @@ export default function Purchases() {
                     <td className="tabular-nums text-gray-400">{formatDate(e.expense_date)}</td>
                   </tr>
                 ))}
-                {!expenses.length && (
+                {!expenses.length && !loading && !error && (
                   <tr><td colSpan={7}><div className="empty-state"><DollarSign size={32} className="text-gray-200" /><p>No expenses recorded</p></div></td></tr>
                 )}
               </tbody>

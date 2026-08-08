@@ -210,7 +210,7 @@ export default function Register() {
               disabled={loading}
               className="btn btn-primary btn-lg w-full justify-center mt-1"
             >
-              {loading ? <span className="spinner spinner-sm" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} /> : 'Create account'}
+              {loading ? <span className="spinner spinner-sm spinner-white" /> : 'Create account'}
             </button>
           </form>
 

@@ -2,12 +2,15 @@ import { useState, useEffect, useRef } from 'react';
 import { Plus, Search, Pencil, Trash2, X, Package, ScanLine, CheckCircle2, AlertCircle } from 'lucide-react';
 import api, { formatCurrency } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import useFetch from '../hooks/useFetch';
+import { TableLoading, TableError } from '../components/TableState';
 
 export default function Products() {
-  const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [scanMode, setScanMode] = useState(false);
   const [scanCount, setScanCount] = useState(0);
@@ -21,7 +24,15 @@ export default function Products() {
   const scanInputRef = useRef(null);
   const nameInputRef = useRef(null);
 
-  useEffect(() => { load(); }, [search]);
+  const { data, loading, error, reload } = useFetch(async () => {
+    const [products, cats] = await Promise.all([
+      api.get('/products', { params: { search } }),
+      api.get('/products/categories/list'),
+    ]);
+    setCategories(cats.data);
+    return products.data;
+  }, [search]);
+  const products = data || [];
 
   useEffect(() => {
     if (scanMode && showModal && scanInputRef.current) {
@@ -35,11 +46,6 @@ export default function Products() {
       return () => clearTimeout(t);
     }
   }, [scanToast]);
-
-  const load = () => {
-    api.get('/products', { params: { search } }).then(res => setProducts(res.data));
-    api.get('/products/categories/list').then(res => setCategories(res.data));
-  };
 
   const resetForm = () => setForm({
     name: '', sku: '', barcode: '', categoryId: '',
@@ -109,18 +115,26 @@ export default function Products() {
         setShowModal(false);
       }
     }
-    load();
+    reload();
   };
 
   const handleDelete = async (product) => {
-    if (!confirm(`Delete "${product.name}"? This cannot be undone.`)) return;
-    await api.delete(`/products/${product.id}`);
-    load();
+    setDeleting(true);
+    try {
+      await api.delete(`/products/${product.id}`);
+      setConfirmDelete(null);
+      reload();
+    } catch (err) {
+      setConfirmDelete(null);
+      setScanToast({ type: 'exists', message: err.response?.data?.error || 'Failed to delete product' });
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const generateBarcode = async (product) => {
     const res = await api.post('/products/barcode/generate', { productId: product.id });
-    load();
+    reload();
     return res.data.barcode;
   };
 
@@ -198,7 +212,11 @@ export default function Products() {
               </tr>
             </thead>
             <tbody>
-              {products.map(p => (
+              {loading ? (
+                <TableLoading colSpan={9} />
+              ) : error ? (
+                <TableError colSpan={9} onRetry={reload} />
+              ) : products.map(p => (
                 <tr key={p.id}>
                   <td className="font-medium text-gray-700">{p.name}</td>
                   <td className="font-mono text-[12px] text-gray-500">{p.sku}</td>
@@ -233,14 +251,14 @@ export default function Products() {
                       <button className="btn btn-ghost btn-sm p-1.5" onClick={() => openEdit(p)} title="Edit">
                         <Pencil size={14} />
                       </button>
-                      <button className="btn btn-ghost btn-sm p-1.5 text-red-500 hover:bg-red-50" onClick={() => handleDelete(p)} title="Delete">
+                      <button className="btn btn-ghost btn-sm p-1.5 text-red-500 hover:bg-red-50" onClick={() => setConfirmDelete(p)} title="Delete">
                         <Trash2 size={14} />
                       </button>
                     </div>
                   </td>
                 </tr>
               ))}
-              {!products.length && (
+              {!products.length && !loading && !error && (
                 <tr>
                   <td colSpan={9}>
                     <div className="empty-state">
@@ -255,6 +273,30 @@ export default function Products() {
           </table>
         </div>
       </div>
+
+      {/* Confirm delete */}
+      {confirmDelete && (
+        <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
+          <div className="modal modal-sm" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Delete Product</h3>
+              <button className="btn btn-ghost btn-sm p-1" onClick={() => setConfirmDelete(null)}><X size={16} /></button>
+            </div>
+            <div className="modal-body">
+              <p className="text-[13px] text-gray-600">
+                Delete <strong className="text-gray-900">{confirmDelete.name}</strong>? This cannot be undone.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setConfirmDelete(null)}>Cancel</button>
+              <button className="btn btn-danger" disabled={deleting} onClick={() => handleDelete(confirmDelete)}>
+                {deleting ? <span className="spinner spinner-sm spinner-white" /> : null}
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal */}
       {showModal && (

@@ -336,6 +336,7 @@ input, select, textarea {
 }
 .spinner-sm { width: 14px; height: 14px; }
 .spinner-lg { width: 26px; height: 26px; border-width: 3px; }
+.spinner-white { border-color: rgba(255,255,255,0.3); border-top-color: #fff; }
 
 /* ── Alert banners ── */
 .alert {

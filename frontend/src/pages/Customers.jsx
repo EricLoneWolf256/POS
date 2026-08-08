@@ -1,17 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, Search, Pencil, X, Users } from 'lucide-react';
 import api, { formatCurrency } from '../services/api';
+import useFetch from '../hooks/useFetch';
+import { TableLoading, TableError } from '../components/TableState';
 
 export default function Customers() {
-  const [customers, setCustomers] = useState([]);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', creditLimit: 0 });
 
-  useEffect(() => { load(); }, [search]);
-
-  const load = () => api.get('/customers', { params: { search } }).then(res => setCustomers(res.data));
+  const { data, loading, error, reload } = useFetch(
+    () => api.get('/customers', { params: { search } }).then(r => r.data),
+    [search]
+  );
+  const customers = data || [];
 
   const openAdd = () => {
     setEditingCustomer(null);
@@ -40,7 +43,7 @@ export default function Customers() {
       await api.post('/customers', payload);
     }
     setShowModal(false);
-    load();
+    reload();
   };
 
   return (
@@ -86,7 +89,11 @@ export default function Customers() {
               </tr>
             </thead>
             <tbody>
-              {customers.map(c => (
+              {loading ? (
+                <TableLoading colSpan={7} />
+              ) : error ? (
+                <TableError colSpan={7} onRetry={reload} />
+              ) : customers.map(c => (
                 <tr key={c.id}>
                   <td className="font-medium text-gray-700">{c.name}</td>
                   <td className="text-gray-500">{c.phone || '—'}</td>
@@ -105,7 +112,7 @@ export default function Customers() {
                   </td>
                 </tr>
               ))}
-              {!customers.length && (
+              {!customers.length && !loading && !error && (
                 <tr>
                   <td colSpan={7}>
                     <div className="empty-state">

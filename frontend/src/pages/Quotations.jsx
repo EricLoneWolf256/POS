@@ -1,12 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, X, FileText } from 'lucide-react';
 import api, { formatCurrency, formatDate } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import useFetch from '../hooks/useFetch';
+import { TableLoading, TableError } from '../components/TableState';
 
 export default function Quotations() {
-  const [quotations, setQuotations] = useState([]);
-  const [customers, setCustomers] = useState([]);
-  const [products, setProducts] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({
     customerId: '', validUntil: '', notes: '', discountAmount: 0,
@@ -14,13 +13,15 @@ export default function Quotations() {
   });
   const { user } = useAuth();
 
-  useEffect(() => { load(); }, []);
-
-  const load = () => {
-    api.get('/quotations').then(res => setQuotations(res.data));
-    api.get('/customers').then(res => setCustomers(res.data));
-    api.get('/products').then(res => setProducts(res.data));
-  };
+  const { data, loading, error, reload } = useFetch(async () => {
+    const [quotations, customers, products] = await Promise.all([
+      api.get('/quotations'),
+      api.get('/customers'),
+      api.get('/products'),
+    ]);
+    return { quotations: quotations.data, customers: customers.data, products: products.data };
+  }, []);
+  const { quotations = [], customers = [], products = [] } = data || {};
 
   const addItem = () => setForm({ ...form, items: [...form.items, { productId: '', description: '', quantity: 1, unitPrice: 0 }] });
   const removeItem = (idx) => setForm({ ...form, items: form.items.filter((_, i) => i !== idx) });
@@ -54,7 +55,7 @@ export default function Quotations() {
     });
     setShowModal(false);
     setForm({ customerId: '', validUntil: '', notes: '', discountAmount: 0, items: [{ productId: '', description: '', quantity: 1, unitPrice: 0 }] });
-    load();
+    reload();
   };
 
   const STATUS_BADGE = {
@@ -92,7 +93,11 @@ export default function Quotations() {
               </tr>
             </thead>
             <tbody>
-              {quotations.map(q => (
+              {loading ? (
+                <TableLoading colSpan={8} />
+              ) : error ? (
+                <TableError colSpan={8} onRetry={reload} />
+              ) : quotations.map(q => (
                 <tr key={q.id}>
                   <td className="font-mono text-[12px] text-gray-600">{q.quote_number}</td>
                   <td className="text-gray-600">{q.customer_name || 'Walk-in'}</td>
@@ -106,7 +111,7 @@ export default function Quotations() {
                   <td className="tabular-nums text-gray-400">{formatDate(q.created_at)}</td>
                 </tr>
               ))}
-              {!quotations.length && (
+              {!quotations.length && !loading && !error && (
                 <tr>
                   <td colSpan={8}>
                     <div className="empty-state">

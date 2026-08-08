@@ -57,7 +57,9 @@ export default function Settings() {
       setAdminStats(statsRes.data.stats);
       setAdminBusinesses(bizRes.data.businesses);
       setAdminTotal(bizRes.data.total);
-    } catch {}
+    } catch {
+      showToast('Failed to load admin data', 'error');
+    }
     finally { setAdminLoading(false); }
   };
 
@@ -90,7 +92,10 @@ export default function Settings() {
     try {
       const fd = new FormData(); fd.append('logo', file);
       await api.post('/uploads/business-logo', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-    } catch {} finally { setUploading(false); }
+      showToast('Logo uploaded');
+    } catch {
+      showToast('Logo upload failed', 'error');
+    } finally { setUploading(false); }
   };
 
   const openAddBranch = () => { setEditingBranch(null); setBranchForm({ name: '', code: '', address: '', phone: '' }); setShowBranchModal(true); };
@@ -588,7 +593,7 @@ export default function Settings() {
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowUserModal(false)}>Cancel</button>
                 <button type="submit" form="user-form" className="btn btn-primary" disabled={submitting}>
-                  {submitting ? <span className="spinner spinner-sm" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} /> : null}
+                  {submitting ? <span className="spinner spinner-sm spinner-white" /> : null}
                   {editingUser ? 'Update User' : 'Create User'}
                 </button>
               </div>
@@ -629,7 +634,7 @@ export default function Settings() {
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowBranchModal(false)}>Cancel</button>
                 <button type="submit" form="branch-form" className="btn btn-primary" disabled={submitting}>
-                  {submitting ? <span className="spinner spinner-sm" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} /> : null}
+                  {submitting ? <span className="spinner spinner-sm spinner-white" /> : null}
                   {editingBranch ? 'Update Branch' : 'Create Branch'}
                 </button>
               </div>

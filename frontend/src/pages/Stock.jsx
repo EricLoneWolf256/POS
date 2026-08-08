@@ -1,12 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AlertTriangle, ArrowRightLeft, Plus, X, Warehouse } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import useFetch from '../hooks/useFetch';
+import { TableLoading, TableError } from '../components/TableState';
 
 export default function StockPage() {
-  const [stock, setStock] = useState([]);
-  const [alerts, setAlerts] = useState([]);
-  const [movements, setMovements] = useState([]);
   const [tab, setTab] = useState('inventory');
   const [showAdjust, setShowAdjust] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
@@ -16,13 +15,15 @@ export default function StockPage() {
   const [transferForm, setTransferForm] = useState({ productId: '', fromBranchId: '', toBranchId: '', quantity: '', notes: '' });
   const { user } = useAuth();
 
-  useEffect(() => { load(); }, [tab]);
-
-  const load = () => {
-    api.get('/stock').then(res => setStock(res.data));
-    api.get('/stock/alerts').then(res => setAlerts(res.data));
-    if (tab === 'movements') api.get('/stock/movements').then(res => setMovements(res.data));
-  };
+  const { data, loading, error, reload } = useFetch(async () => {
+    const [stockRes, alertsRes, movementsRes] = await Promise.all([
+      api.get('/stock'),
+      api.get('/stock/alerts'),
+      api.get('/stock/movements'),
+    ]);
+    return { stock: stockRes.data, alerts: alertsRes.data, movements: movementsRes.data };
+  }, [tab]);
+  const { stock = [], alerts = [], movements = [] } = data || {};
 
   const loadTransferData = () => {
     api.get('/products').then(res => setProducts(res.data));
@@ -39,7 +40,7 @@ export default function StockPage() {
     });
     setShowAdjust(false);
     setAdjustForm({ productId: '', quantity: '', notes: '' });
-    load();
+    reload();
   };
 
   const handleTransfer = async (e) => {
@@ -53,7 +54,7 @@ export default function StockPage() {
     });
     setShowTransfer(false);
     setTransferForm({ productId: '', fromBranchId: '', toBranchId: '', quantity: '', notes: '' });
-    load();
+    reload();
   };
 
   return (
@@ -131,7 +132,11 @@ export default function StockPage() {
                 </tr>
               </thead>
               <tbody>
-                {stock.map(s => (
+                {loading ? (
+                  <TableLoading colSpan={6} />
+                ) : error ? (
+                  <TableError colSpan={6} onRetry={reload} />
+                ) : stock.map(s => (
                   <tr key={s.id}>
                     <td className="font-medium text-gray-700">{s.product_name}</td>
                     <td className="font-mono text-[12px] text-gray-500">{s.sku}</td>
@@ -153,7 +158,7 @@ export default function StockPage() {
                     </td>
                   </tr>
                 ))}
-                {!stock.length && (
+                {!stock.length && !loading && !error && (
                   <tr>
                     <td colSpan={6}>
                       <div className="empty-state">
@@ -178,7 +183,11 @@ export default function StockPage() {
                 </tr>
               </thead>
               <tbody>
-                {movements.map(m => (
+                {loading ? (
+                  <TableLoading colSpan={6} />
+                ) : error ? (
+                  <TableError colSpan={6} onRetry={reload} />
+                ) : movements.map(m => (
                   <tr key={m.id}>
                     <td className="tabular-nums text-gray-500 text-[12px]">
                       {new Date(m.created_at).toLocaleString('en-UG')}
@@ -194,9 +203,15 @@ export default function StockPage() {
                     <td className="text-gray-500">{m.first_name} {m.last_name}</td>
                   </tr>
                 ))}
-                {!movements.length && (
+                {!movements.length && !loading && !error && (
                   <tr>
-                    <td colSpan={6} className="text-center text-gray-400 py-8 text-sm">No movement history</td>
+                    <td colSpan={6}>
+                      <div className="empty-state">
+                        <Warehouse size={32} className="text-gray-200" />
+                        <p>No movement history</p>
+                        <span>Adjustments and transfers will appear here</span>
+                      </div>
+                    </td>
                   </tr>
                 )}
               </tbody>

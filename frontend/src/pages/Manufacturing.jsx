@@ -1,12 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, X, Factory } from 'lucide-react';
 import api from '../services/api';
+import useFetch from '../hooks/useFetch';
+import { TableLoading, TableError } from '../components/TableState';
 
 export default function Manufacturing() {
-  const [materials, setMaterials] = useState([]);
-  const [boms, setBoms] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [products, setProducts] = useState([]);
   const [tab, setTab] = useState('materials');
   const [showMaterialModal, setShowMaterialModal] = useState(false);
   const [showBomModal, setShowBomModal] = useState(false);
@@ -16,22 +14,25 @@ export default function Manufacturing() {
   const [orderForm, setOrderForm] = useState({ bomId: '', quantity: 1, branchId: '' });
   const [branches, setBranches] = useState([]);
 
-  useEffect(() => { load(); }, [tab]);
-
-  const load = () => {
-    api.get('/manufacturing/materials').then(res => setMaterials(res.data));
-    api.get('/manufacturing/bom').then(res => setBoms(res.data));
-    api.get('/manufacturing/orders').then(res => setOrders(res.data));
-    api.get('/products').then(res => setProducts(res.data));
-    api.get('/auth/branches').then(res => setBranches(res.data));
-  };
+  const { data, loading, error, reload } = useFetch(async () => {
+    const [materials, boms, orders, products, branchesRes] = await Promise.all([
+      api.get('/manufacturing/materials'),
+      api.get('/manufacturing/bom'),
+      api.get('/manufacturing/orders'),
+      api.get('/products'),
+      api.get('/auth/branches'),
+    ]);
+    setBranches(branchesRes.data);
+    return { materials: materials.data, boms: boms.data, orders: orders.data, products: products.data };
+  }, [tab]);
+  const { materials = [], boms = [], orders = [], products = [] } = data || {};
 
   const handleMaterialSubmit = async (e) => {
     e.preventDefault();
     await api.post('/manufacturing/materials', { ...materialForm, costPerUnit: parseFloat(materialForm.costPerUnit) });
     setShowMaterialModal(false);
     setMaterialForm({ name: '', sku: '', unit: 'kg', costPerUnit: 0 });
-    load();
+    reload();
   };
 
   const handleBomSubmit = async (e) => {
@@ -44,7 +45,7 @@ export default function Manufacturing() {
     });
     setShowBomModal(false);
     setBomForm({ name: '', productId: '', outputQuantity: 1, items: [{ materialId: '', quantity: 1 }] });
-    load();
+    reload();
   };
 
   const handleOrderSubmit = async (e) => {
@@ -56,7 +57,7 @@ export default function Manufacturing() {
     });
     setShowOrderModal(false);
     setOrderForm({ bomId: '', quantity: 1, branchId: '' });
-    load();
+    reload();
   };
 
   const addBomItem = () => setBomForm({ ...bomForm, items: [...bomForm.items, { materialId: '', quantity: 1 }] });
@@ -115,7 +116,11 @@ export default function Manufacturing() {
                 <tr><th>Material</th><th>SKU</th><th>Unit</th><th>Cost/Unit</th><th>Stock</th></tr>
               </thead>
               <tbody>
-                {materials.map(m => (
+                {loading ? (
+                  <TableLoading colSpan={5} />
+                ) : error ? (
+                  <TableError colSpan={5} onRetry={reload} />
+                ) : materials.map(m => (
                   <tr key={m.id}>
                     <td className="font-medium text-gray-700">{m.name}</td>
                     <td className="font-mono text-[12px] text-gray-500">{m.sku}</td>
@@ -124,7 +129,7 @@ export default function Manufacturing() {
                     <td className="tabular-nums text-gray-600">{m.stock_quantity || 0}</td>
                   </tr>
                 ))}
-                {!materials.length && (
+                {!materials.length && !loading && !error && (
                   <tr><td colSpan={5}><div className="empty-state"><Factory size={32} className="text-gray-200" /><p>No raw materials yet</p></div></td></tr>
                 )}
               </tbody>
@@ -140,7 +145,11 @@ export default function Manufacturing() {
                 <tr><th>BOM Name</th><th>Product</th><th>Output Qty</th><th>Status</th></tr>
               </thead>
               <tbody>
-                {boms.map(b => (
+                {loading ? (
+                  <TableLoading colSpan={4} />
+                ) : error ? (
+                  <TableError colSpan={4} onRetry={reload} />
+                ) : boms.map(b => (
                   <tr key={b.id}>
                     <td className="font-medium text-gray-700">{b.name}</td>
                     <td className="text-gray-600">{b.product_name}</td>
@@ -148,7 +157,7 @@ export default function Manufacturing() {
                     <td><span className="badge badge-green">Active</span></td>
                   </tr>
                 ))}
-                {!boms.length && (
+                {!boms.length && !loading && !error && (
                   <tr><td colSpan={4}><div className="empty-state"><Factory size={32} className="text-gray-200" /><p>No BOMs configured yet</p></div></td></tr>
                 )}
               </tbody>
@@ -164,7 +173,11 @@ export default function Manufacturing() {
                 <tr><th>Order #</th><th>Product</th><th>Qty</th><th>Cost</th><th>Branch</th><th>Status</th><th>Date</th></tr>
               </thead>
               <tbody>
-                {orders.map(o => (
+                {loading ? (
+                  <TableLoading colSpan={7} />
+                ) : error ? (
+                  <TableError colSpan={7} onRetry={reload} />
+                ) : orders.map(o => (
                   <tr key={o.id}>
                     <td className="font-mono text-[12px] text-gray-600">{o.order_number}</td>
                     <td className="text-gray-600">{o.product_name}</td>
@@ -179,7 +192,7 @@ export default function Manufacturing() {
                     <td className="tabular-nums text-gray-400">{new Date(o.created_at).toLocaleDateString('en-UG')}</td>
                   </tr>
                 ))}
-                {!orders.length && (
+                {!orders.length && !loading && !error && (
                   <tr><td colSpan={7}><div className="empty-state"><Factory size={32} className="text-gray-200" /><p>No production orders yet</p></div></td></tr>
                 )}
               </tbody>
