@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Lock, CheckCircle2, AlertCircle } from 'lucide-react';
 import api from '../services/api';
@@ -14,12 +14,16 @@ export default function ResetPassword() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
         <div className="text-center animate-fade-in">
-          <AlertCircle size={48} className="text-red-400 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-slate-800 mb-2">Invalid reset link</h2>
-          <p className="text-sm text-slate-500 mb-4">This password reset link is invalid or missing.</p>
-          <Link to="/forgot-password" className="text-sm font-semibold text-orange-600 hover:text-orange-700">Request a new link</Link>
+          <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle size={22} className="text-red-500" strokeWidth={1.5} />
+          </div>
+          <h2 className="text-lg font-medium text-gray-900 mb-2">Invalid reset link</h2>
+          <p className="text-sm text-gray-400 font-light mb-5">This password reset link is invalid or missing.</p>
+          <Link to="/forgot-password" className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+            Request a new link
+          </Link>
         </div>
       </div>
     );
@@ -27,68 +31,90 @@ export default function ResetPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (password !== confirm) {
-      setError('Passwords do not match');
-      return;
-    }
+    if (password !== confirm) { setError('Passwords do not match'); return; }
     setLoading(true);
     setError('');
     try {
       await api.post('/auth/reset-password', { token, password });
       setSuccess(true);
     } catch (err) {
-      setError(err.response?.data?.error || 'Something went wrong');
+      setError(err.response?.data?.error || 'Something went wrong. Try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-md animate-fade-in">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
-            <span className="text-white font-bold text-lg">V</span>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+      <div className="w-full max-w-[400px] animate-fade-in">
+
+        {/* Logo */}
+        <div className="flex items-center gap-2.5 mb-8">
+          <div className="w-8 h-8 rounded-md bg-blue-500 flex items-center justify-center shrink-0">
+            <span className="text-white font-medium text-sm leading-none">V</span>
           </div>
-          <span className="font-bold text-slate-800">Venderra</span>
+          <span className="font-medium text-gray-800 text-[15px]">Venderra</span>
         </div>
 
-        <div className="bg-white rounded-2xl p-8 shadow-sm shadow-slate-200/50 border border-slate-200/80">
+        <div className="card p-8">
           {success ? (
             <div className="text-center animate-fade-in">
-              <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle2 size={28} className="text-amber-500" />
+              <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 size={22} className="text-blue-500" strokeWidth={1.5} />
               </div>
-              <h2 className="text-xl font-bold text-slate-800 mb-2">Password reset!</h2>
-              <p className="text-sm text-slate-500 mb-6">Your password has been updated. You can now sign in.</p>
-              <Link to="/login" className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:shadow-xl transition-all active:scale-[0.98]">
+              <h2 className="text-lg font-medium text-gray-900 mb-2">Password reset!</h2>
+              <p className="text-sm text-gray-400 font-light mb-6">Your password has been updated. You can now sign in.</p>
+              <Link to="/login" className="btn btn-primary btn-lg">
                 Sign in
               </Link>
             </div>
           ) : (
             <>
-              <h2 className="text-xl font-bold text-slate-800 mb-1">Set new password</h2>
-              <p className="text-sm text-slate-500 mb-6">Choose a strong password for your account.</p>
+              <h2 className="text-lg font-medium text-gray-900 mb-1">Set new password</h2>
+              <p className="text-sm text-gray-400 font-light mb-6">Choose a strong password for your account.</p>
 
-              {error && <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-sm font-medium">{error}</div>}
+              {error && <div className="alert alert-error mb-4">{error}</div>}
 
-              <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">New password</label>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="form-label">New password</label>
                   <div className="relative">
-                    <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input type="password" className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} placeholder="At least 6 characters" />
+                    <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" />
+                    <input
+                      type="password"
+                      className="input input-icon-left"
+                      placeholder="At least 6 characters"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      required
+                      minLength={6}
+                    />
                   </div>
                 </div>
-                <div className="mb-6">
-                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Confirm password</label>
+                <div>
+                  <label className="form-label">Confirm password</label>
                   <div className="relative">
-                    <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input type="password" className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10" value={confirm} onChange={e => setConfirm(e.target.value)} required minLength={6} placeholder="Re-enter password" />
+                    <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" />
+                    <input
+                      type="password"
+                      className="input input-icon-left"
+                      placeholder="Re-enter password"
+                      value={confirm}
+                      onChange={e => setConfirm(e.target.value)}
+                      required
+                      minLength={6}
+                    />
                   </div>
                 </div>
-                <button type="submit" disabled={loading} className="w-full py-3 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:shadow-xl transition-all active:scale-[0.98] disabled:opacity-50">
-                  {loading ? 'Resetting...' : 'Reset Password'}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn btn-primary btn-lg w-full justify-center"
+                >
+                  {loading
+                    ? <span className="spinner spinner-sm" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} />
+                    : 'Reset Password'
+                  }
                 </button>
               </form>
             </>

@@ -23,11 +23,8 @@ import Employees from './pages/Employees';
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
-      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/20 animate-pulse">
-        <span className="text-white font-bold text-lg">V</span>
-      </div>
-      <p className="text-sm text-slate-400 font-medium">Loading Venderra...</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <span className="spinner spinner-lg" />
     </div>
   );
   return user ? children : <Navigate to="/login" />;

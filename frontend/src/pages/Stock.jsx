@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AlertTriangle, ArrowRightLeft, X } from 'lucide-react';
+import { AlertTriangle, ArrowRightLeft, Plus, X, Warehouse } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -57,202 +57,286 @@ export default function StockPage() {
   };
 
   return (
-    <div className="animate-fade-in">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-800">Stock Management</h1>
+    <div className="space-y-5 animate-fade-in">
+
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="page-title">Stock Management</h1>
+          <p className="page-subtitle">Track inventory levels and movements</p>
+        </div>
         <div className="flex gap-2">
-          <button
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 active:scale-[0.98]"
-            onClick={loadTransferData}
-          >
-            <ArrowRightLeft size={16} /> Transfer
+          <button className="btn btn-secondary" onClick={loadTransferData}>
+            <ArrowRightLeft size={15} /> Transfer
           </button>
-          <button
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:shadow-xl hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]"
-            onClick={() => setShowAdjust(true)}
-          >
-            Adjust Stock
+          <button className="btn btn-primary" onClick={() => setShowAdjust(true)}>
+            <Plus size={15} /> Adjust Stock
           </button>
         </div>
       </div>
 
+      {/* Low stock alerts */}
       {alerts.length > 0 && (
-        <div className="bg-amber-50 rounded-2xl border border-amber-200/60 p-5 mb-6 animate-fade-in">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center">
-              <AlertTriangle size={16} className="text-amber-600" />
+        <div className="alert alert-warn animate-fade-in">
+          <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold mb-1.5">{alerts.length} Low Stock Alert{alerts.length > 1 ? 's' : ''}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {alerts.slice(0, 5).map(a => (
+                <span key={`${a.branch_id}-${a.product_name}`} className="inline-flex items-center px-2 py-1 bg-white/70 text-amber-700 rounded text-xs font-medium border border-amber-200/60">
+                  {a.product_name} ({a.branch_name}): {a.quantity} left
+                </span>
+              ))}
+              {alerts.length > 5 && (
+                <span className="text-xs text-amber-700 font-medium self-center">+{alerts.length - 5} more</span>
+              )}
             </div>
-            <strong className="text-sm text-amber-800">{alerts.length} Low Stock Alert{alerts.length > 1 ? 's' : ''}</strong>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {alerts.slice(0, 5).map(a => (
-              <span key={`${a.branch_id}-${a.product_name}`} className="inline-flex items-center px-3 py-1.5 bg-white/80 text-amber-700 rounded-xl text-xs font-semibold ring-1 ring-amber-200/50">
-                {a.product_name} ({a.branch_name}): {a.quantity} left
-              </span>
-            ))}
           </div>
         </div>
       )}
 
-      <div className="flex gap-1 bg-slate-100 p-1 rounded-xl mb-6 w-fit">
-        {['inventory', 'movements'].map(t => (
+      {/* Tabs */}
+      <div className="flex gap-0.5 bg-gray-100 p-0.5 rounded-md w-fit">
+        {[
+          { key: 'inventory', label: 'Inventory' },
+          { key: 'movements', label: 'Movement History' },
+        ].map(t => (
           <button
-            key={t}
-            className={`px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-200 ${
-              tab === t ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+            key={t.key}
+            className={`px-4 py-1.5 rounded text-[13px] font-medium transition-colors ${
+              tab === t.key
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
             }`}
-            onClick={() => setTab(t)}
+            onClick={() => setTab(t.key)}
           >
-            {t === 'inventory' ? 'Inventory' : 'Movement History'}
+            {t.label}
           </button>
         ))}
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm shadow-slate-200/50 overflow-hidden">
-        {tab === 'inventory' ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
+      {/* Table */}
+      <div className="card overflow-hidden">
+        <div className="overflow-x-auto">
+          {tab === 'inventory' ? (
+            <table className="table">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/50">
-                  <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Product</th>
-                  <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">SKU</th>
-                  <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Branch</th>
-                  <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Quantity</th>
-                  <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Threshold</th>
-                  <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Status</th>
+                <tr>
+                  <th>Product</th>
+                  <th>SKU</th>
+                  <th>Branch</th>
+                  <th>Quantity</th>
+                  <th>Threshold</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {stock.map(s => (
-                  <tr key={s.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
-                    <td className="py-3.5 px-5 text-sm font-medium text-slate-700">{s.product_name}</td>
-                    <td className="py-3.5 px-5 text-sm text-slate-500 font-mono">{s.sku}</td>
-                    <td className="py-3.5 px-5 text-sm text-slate-600">{s.branch_name}</td>
-                    <td className="py-3.5 px-5 text-sm font-semibold text-slate-800">{s.quantity}</td>
-                    <td className="py-3.5 px-5 text-sm text-slate-500">{s.low_stock_threshold}</td>
-                    <td className="py-3.5 px-5">
-                      <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                        s.quantity <= 0 ? 'bg-red-50 text-red-600 ring-1 ring-red-100/50'
-                        : s.quantity <= s.low_stock_threshold ? 'bg-red-50 text-red-600 ring-1 ring-red-100/50'
-                        : s.quantity <= s.low_stock_threshold * 2 ? 'bg-amber-50 text-amber-600 ring-1 ring-amber-100/50'
-                        : 'bg-amber-50 text-amber-600 ring-1 ring-amber-100/50'
+                  <tr key={s.id}>
+                    <td className="font-medium text-gray-700">{s.product_name}</td>
+                    <td className="font-mono text-[12px] text-gray-500">{s.sku}</td>
+                    <td className="text-gray-600">{s.branch_name}</td>
+                    <td className="tabular-nums font-medium text-gray-900">{s.quantity}</td>
+                    <td className="tabular-nums text-gray-500">{s.low_stock_threshold}</td>
+                    <td>
+                      <span className={`badge ${
+                        s.quantity <= 0 ? 'badge-red'
+                        : s.quantity <= s.low_stock_threshold ? 'badge-red'
+                        : s.quantity <= s.low_stock_threshold * 2 ? 'badge-amber'
+                        : 'badge-green'
                       }`}>
-                        {s.quantity <= 0 ? 'Out of Stock' : s.quantity <= s.low_stock_threshold ? 'Low Stock' : s.quantity <= s.low_stock_threshold * 2 ? 'Warning' : 'In Stock'}
+                        {s.quantity <= 0 ? 'Out of Stock'
+                          : s.quantity <= s.low_stock_threshold ? 'Low Stock'
+                          : s.quantity <= s.low_stock_threshold * 2 ? 'Warning'
+                          : 'In Stock'}
                       </span>
                     </td>
                   </tr>
                 ))}
+                {!stock.length && (
+                  <tr>
+                    <td colSpan={6}>
+                      <div className="empty-state">
+                        <Warehouse size={32} className="text-gray-200" />
+                        <p>No stock data</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          ) : (
+            <table className="table">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/50">
-                  <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Date</th>
-                  <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Product</th>
-                  <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Type</th>
-                  <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Qty</th>
-                  <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Branch</th>
-                  <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">By</th>
+                <tr>
+                  <th>Date</th>
+                  <th>Product</th>
+                  <th>Type</th>
+                  <th>Qty</th>
+                  <th>Branch</th>
+                  <th>By</th>
                 </tr>
               </thead>
               <tbody>
                 {movements.map(m => (
-                  <tr key={m.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
-                    <td className="py-3.5 px-5 text-sm text-slate-500">{new Date(m.created_at).toLocaleString('en-UG')}</td>
-                    <td className="py-3.5 px-5 text-sm font-medium text-slate-700">{m.product_name}</td>
-                    <td className="py-3.5 px-5"><span className="inline-flex px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-semibold ring-1 ring-blue-100/50">{m.movement_type.replace('_', ' ')}</span></td>
-                    <td className={`py-3.5 px-5 text-sm font-semibold ${m.quantity < 0 ? 'text-red-500' : 'text-amber-600'}`}>
+                  <tr key={m.id}>
+                    <td className="tabular-nums text-gray-500 text-[12px]">
+                      {new Date(m.created_at).toLocaleString('en-UG')}
+                    </td>
+                    <td className="font-medium text-gray-700">{m.product_name}</td>
+                    <td>
+                      <span className="badge badge-blue">{m.movement_type.replace('_', ' ')}</span>
+                    </td>
+                    <td className={`tabular-nums font-medium ${m.quantity < 0 ? 'text-red-600' : 'text-green-700'}`}>
                       {m.quantity > 0 ? '+' : ''}{m.quantity}
                     </td>
-                    <td className="py-3.5 px-5 text-sm text-slate-600">{m.branch_name}</td>
-                    <td className="py-3.5 px-5 text-sm text-slate-500">{m.first_name} {m.last_name}</td>
+                    <td className="text-gray-600">{m.branch_name}</td>
+                    <td className="text-gray-500">{m.first_name} {m.last_name}</td>
                   </tr>
                 ))}
+                {!movements.length && (
+                  <tr>
+                    <td colSpan={6} className="text-center text-gray-400 py-8 text-sm">No movement history</td>
+                  </tr>
+                )}
               </tbody>
             </table>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
+      {/* Adjust Stock Modal */}
       {showAdjust && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[200] animate-fade-in" onClick={() => setShowAdjust(false)}>
-          <div className="bg-white rounded-2xl p-8 w-[90%] max-w-[500px] shadow-2xl shadow-slate-900/10 animate-modal-enter" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold tracking-tight text-slate-800 flex items-center gap-2"><ArrowRightLeft size={20} /> Adjust Stock</h3>
-              <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all" onClick={() => setShowAdjust(false)}><X size={18} /></button>
+        <div className="modal-overlay" onClick={() => setShowAdjust(false)}>
+          <div className="modal animate-modal-enter" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title flex items-center gap-2">
+                <ArrowRightLeft size={16} /> Adjust Stock
+              </h3>
+              <button className="btn btn-ghost btn-sm p-1" onClick={() => setShowAdjust(false)}>
+                <X size={16} />
+              </button>
             </div>
-            <form onSubmit={handleAdjust}>
-              <div className="mb-4">
-                <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Product</label>
-                <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" value={adjustForm.productId} onChange={e => setAdjustForm({...adjustForm, productId: e.target.value})} required>
-                  <option value="">Select product</option>
-                  {[...new Map(stock.map(s => [s.product_id, s])).values()].map(s => (
-                    <option key={s.product_id} value={s.product_id}>{s.product_name}</option>
-                  ))}
-                </select>
+            <form id="adjust-form" onSubmit={handleAdjust}>
+              <div className="modal-body space-y-4">
+                <div>
+                  <label className="form-label">Product</label>
+                  <select
+                    className="input"
+                    value={adjustForm.productId}
+                    onChange={e => setAdjustForm({...adjustForm, productId: e.target.value})}
+                    required
+                  >
+                    <option value="">Select product</option>
+                    {[...new Map(stock.map(s => [s.product_id, s])).values()].map(s => (
+                      <option key={s.product_id} value={s.product_id}>{s.product_name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label">New Quantity</label>
+                  <input
+                    className="input"
+                    type="number"
+                    value={adjustForm.quantity}
+                    onChange={e => setAdjustForm({...adjustForm, quantity: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="form-label">Notes</label>
+                  <textarea
+                    className="input"
+                    rows={3}
+                    value={adjustForm.notes}
+                    onChange={e => setAdjustForm({...adjustForm, notes: e.target.value})}
+                  />
+                </div>
               </div>
-              <div className="mb-4">
-                <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">New Quantity</label>
-                <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" type="number" value={adjustForm.quantity} onChange={e => setAdjustForm({...adjustForm, quantity: e.target.value})} required />
-              </div>
-              <div className="mb-6">
-                <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Notes</label>
-                <textarea className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" value={adjustForm.notes} onChange={e => setAdjustForm({...adjustForm, notes: e.target.value})} rows={3} />
-              </div>
-              <div className="flex gap-3 justify-end">
-                <button type="button" className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-200" onClick={() => setShowAdjust(false)}>Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]">Adjust</button>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowAdjust(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary">Adjust</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
+      {/* Transfer Stock Modal */}
       {showTransfer && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[200] animate-fade-in" onClick={() => setShowTransfer(false)}>
-          <div className="bg-white rounded-2xl p-8 w-[90%] max-w-[500px] shadow-2xl shadow-slate-900/10 animate-modal-enter" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold tracking-tight text-slate-800 flex items-center gap-2"><ArrowRightLeft size={20} /> Transfer Stock</h3>
-              <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all" onClick={() => setShowTransfer(false)}><X size={18} /></button>
+        <div className="modal-overlay" onClick={() => setShowTransfer(false)}>
+          <div className="modal animate-modal-enter" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title flex items-center gap-2">
+                <ArrowRightLeft size={16} /> Transfer Stock
+              </h3>
+              <button className="btn btn-ghost btn-sm p-1" onClick={() => setShowTransfer(false)}>
+                <X size={16} />
+              </button>
             </div>
-            <form onSubmit={handleTransfer}>
-              <div className="mb-4">
-                <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Product</label>
-                <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" value={transferForm.productId} onChange={e => setTransferForm({...transferForm, productId: e.target.value})} required>
-                  <option value="">Select product</option>
-                  {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-4 mb-4">
+            <form id="transfer-form" onSubmit={handleTransfer}>
+              <div className="modal-body space-y-4">
                 <div>
-                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">From Branch</label>
-                  <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" value={transferForm.fromBranchId} onChange={e => setTransferForm({...transferForm, fromBranchId: e.target.value})} required>
-                    <option value="">Select branch</option>
-                    {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  <label className="form-label">Product</label>
+                  <select
+                    className="input"
+                    value={transferForm.productId}
+                    onChange={e => setTransferForm({...transferForm, productId: e.target.value})}
+                    required
+                  >
+                    <option value="">Select product</option>
+                    {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="form-label">From Branch</label>
+                    <select
+                      className="input"
+                      value={transferForm.fromBranchId}
+                      onChange={e => setTransferForm({...transferForm, fromBranchId: e.target.value})}
+                      required
+                    >
+                      <option value="">Select branch</option>
+                      {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label">To Branch</label>
+                    <select
+                      className="input"
+                      value={transferForm.toBranchId}
+                      onChange={e => setTransferForm({...transferForm, toBranchId: e.target.value})}
+                      required
+                    >
+                      <option value="">Select branch</option>
+                      {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                    </select>
+                  </div>
+                </div>
                 <div>
-                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">To Branch</label>
-                  <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" value={transferForm.toBranchId} onChange={e => setTransferForm({...transferForm, toBranchId: e.target.value})} required>
-                    <option value="">Select branch</option>
-                    {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-                  </select>
+                  <label className="form-label">Quantity</label>
+                  <input
+                    className="input"
+                    type="number"
+                    value={transferForm.quantity}
+                    onChange={e => setTransferForm({...transferForm, quantity: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="form-label">Notes</label>
+                  <textarea
+                    className="input"
+                    rows={3}
+                    value={transferForm.notes}
+                    onChange={e => setTransferForm({...transferForm, notes: e.target.value})}
+                  />
                 </div>
               </div>
-              <div className="mb-4">
-                <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Quantity</label>
-                <input className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" type="number" value={transferForm.quantity} onChange={e => setTransferForm({...transferForm, quantity: e.target.value})} required />
-              </div>
-              <div className="mb-6">
-                <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Notes</label>
-                <textarea className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200" value={transferForm.notes} onChange={e => setTransferForm({...transferForm, notes: e.target.value})} rows={3} />
-              </div>
-              <div className="flex gap-3 justify-end">
-                <button type="button" className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-200" onClick={() => setShowTransfer(false)}>Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]">Transfer</button>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowTransfer(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary">Transfer</button>
               </div>
             </form>
           </div>

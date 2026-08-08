@@ -1,15 +1,23 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Check, Loader, ArrowRight, Mail, Lock } from 'lucide-react';
+import { Loader2, ArrowRight, Mail, Lock, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
+const FEATURES = [
+  'Works fully offline — never stop selling',
+  'Real-time stock across all branches',
+  'MTN MoMo, Airtel Money & card payments',
+  'PDF receipts, invoices & Excel exports',
+  'SMS & WhatsApp daily summaries',
+];
+
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
+  const { login }  = useAuth();
+  const navigate   = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,7 +27,7 @@ export default function Login() {
       await login(email, password);
       navigate('/app');
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed');
+      setError(err.response?.data?.error || 'Login failed. Check your credentials and try again.');
     } finally {
       setLoading(false);
     }
@@ -27,111 +35,103 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left panel — branding */}
-      <div className="hidden lg:flex flex-1 relative bg-[#0f172a] overflow-hidden">
-        {/* Ambient gradients */}
-        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-orange-500/[0.07] blur-[120px]" />
-        <div className="absolute bottom-[-15%] left-[-5%] w-[500px] h-[500px] rounded-full bg-amber-400/[0.05] blur-[100px]" />
 
-        {/* Content */}
-        <div className="relative z-10 flex flex-col justify-between w-full p-14 xl:p-16">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-amber-400 flex items-center justify-center">
-              <span className="text-white font-extrabold text-lg">V</span>
-            </div>
-            <span className="text-white font-bold text-xl tracking-tight">Venderra</span>
+      {/* ── Left panel ── */}
+      <div className="hidden lg:flex w-[44%] xl:w-[46%] bg-[#09090b] flex-col justify-between p-12 xl:p-16 shrink-0">
+
+        {/* Logo */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-md bg-blue-500 flex items-center justify-center shrink-0">
+            <span className="text-white font-bold text-sm leading-none">V</span>
           </div>
-
-          {/* Hero */}
-          <div className="max-w-lg">
-            <h1 className="text-[42px] xl:text-[48px] font-bold text-white leading-[1.1] tracking-tight mb-5">
-              Run your business<br />
-              <span className="bg-gradient-to-r from-orange-300 to-amber-300 bg-clip-text text-transparent">with confidence</span>
-            </h1>
-            <p className="text-[15px] text-white/45 leading-relaxed mb-10 max-w-md">
-              The complete POS platform for retail, supermarkets, and pharmacies across Uganda. Sell offline, manage stock, track everything.
-            </p>
-
-            {/* Feature list */}
-            <div className="space-y-3">
-              {[
-                'Works offline — never stop selling',
-                'Real-time stock across all branches',
-                'MTN MoMo, Airtel Money & card payments',
-                'PDF receipts, invoices & report exports',
-                'SMS & WhatsApp daily summaries',
-              ].map((f) => (
-                <div key={f} className="flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full bg-orange-400/10 flex items-center justify-center shrink-0">
-                    <Check size={11} className="text-orange-400" strokeWidth={3} />
-                  </div>
-                  <span className="text-sm text-white/50">{f}</span>
-                </div>
-              ))}
-            </div>
+          <div>
+            <span className="text-white font-semibold text-[14px] tracking-tight leading-none">Venderra</span>
+            <p className="text-[10px] text-white/30 mt-0.5">POS Platform</p>
           </div>
-
-          {/* Footer */}
-          <p className="text-xs text-white/20">&copy; {new Date().getFullYear()} Venderra Technologies</p>
         </div>
+
+        {/* Headline */}
+        <div className="max-w-sm">
+          <h1 className="text-[38px] xl:text-[44px] font-semibold text-white leading-[1.15] tracking-tight mb-4">
+            Run your business<br />
+            <span className="text-blue-400">with confidence.</span>
+          </h1>
+          <p className="text-[13px] text-white/40 leading-relaxed font-light mb-8">
+            The complete POS platform for retail, supermarkets, and pharmacies across Uganda and beyond.
+          </p>
+
+          <ul className="space-y-2.5">
+            {FEATURES.map(f => (
+              <li key={f} className="flex items-center gap-2.5">
+                <div className="w-4 h-4 rounded-full border border-blue-400/40 bg-blue-500/10 flex items-center justify-center shrink-0">
+                  <Check size={9} className="text-blue-400" strokeWidth={3} />
+                </div>
+                <span className="text-[13px] text-white/50">{f}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <p className="text-[11px] text-white/20">&copy; {new Date().getFullYear()} Venderra Technologies</p>
       </div>
 
-      {/* Right panel — form */}
-      <div className="flex-1 flex items-center justify-center bg-white px-6 py-12 sm:px-10 lg:px-16">
-        <div className="w-full max-w-[400px]">
+      {/* ── Right panel — form ── */}
+      <div className="flex-1 flex items-center justify-center bg-white px-6 py-12 sm:px-10">
+        <div className="w-full max-w-[380px]">
+
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-10">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-md shadow-orange-500/20">
-              <span className="text-white font-extrabold text-base">V</span>
+          <div className="lg:hidden flex items-center gap-2 mb-10">
+            <div className="w-8 h-8 rounded-md bg-blue-500 flex items-center justify-center">
+              <span className="text-white font-bold text-sm">V</span>
             </div>
-            <span className="font-bold text-lg text-slate-800 tracking-tight">Venderra</span>
+            <span className="font-semibold text-gray-800 text-[15px] tracking-tight">Venderra</span>
           </div>
 
-          {/* Header */}
-          <div className="mb-8">
-            <h2 className="text-[26px] font-bold text-slate-900 tracking-tight">Welcome back</h2>
-            <p className="text-sm text-slate-400 mt-1.5">Sign in to your account to continue</p>
-          </div>
+          <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">Welcome back</h2>
+          <p className="text-sm text-gray-400 font-light mt-1 mb-8">Sign in to your account to continue</p>
 
-          {/* Error */}
           {error && (
-            <div className="mb-5 px-4 py-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm font-medium">
+            <div className="alert alert-error mb-5">
               {error}
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Email */}
             <div>
-              <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Email</label>
+              <label className="form-label">Email address</label>
               <div className="relative">
-                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
+                <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" />
                 <input
                   type="email"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-500/10 transition-all duration-200"
+                  placeholder="you@company.com"
+                  className="input input-icon-left"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required
+                  autoComplete="email"
                 />
               </div>
             </div>
 
+            {/* Password */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-[13px] font-semibold text-slate-600">Password</label>
-                <Link to="/forgot-password" className="text-[12px] font-semibold text-orange-600 hover:text-orange-700 transition-colors">
+              <div className="flex items-center justify-between mb-[5px]">
+                <label className="form-label" style={{ margin: 0 }}>Password</label>
+                <Link to="/forgot-password" className="text-[12px] font-medium text-blue-600 hover:text-blue-700 transition-colors">
                   Forgot password?
                 </Link>
               </div>
               <div className="relative">
-                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
+                <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" />
                 <input
                   type="password"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-500/10 transition-all duration-200"
+                  placeholder="••••••••"
+                  className="input input-icon-left"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
+                  autoComplete="current-password"
                 />
               </div>
             </div>
@@ -139,23 +139,22 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3 mt-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white rounded-xl font-semibold text-[15px] shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]"
+              className="btn btn-primary btn-lg w-full justify-center mt-2"
             >
               {loading ? (
-                <Loader size={18} className="animate-spin" />
+                <span className="spinner spinner-sm" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} />
               ) : (
                 <>
                   Sign in
-                  <ArrowRight size={16} strokeWidth={2.5} />
+                  <ArrowRight size={15} strokeWidth={2.5} />
                 </>
               )}
             </button>
           </form>
 
-          {/* Register link */}
-          <p className="text-center text-sm text-slate-400 mt-6">
+          <p className="text-center text-[13px] text-gray-400 mt-6">
             New to Venderra?{' '}
-            <Link to="/register" className="font-semibold text-orange-600 hover:text-orange-700 transition-colors">
+            <Link to="/register" className="font-semibold text-blue-600 hover:text-blue-700 transition-colors">
               Create an account
             </Link>
           </p>

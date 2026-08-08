@@ -4,10 +4,10 @@ import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import api from '../services/api';
 
 export default function ForgotPassword() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail]   = useState('');
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [error, setError] = useState('');
+  const [sent, setSent]     = useState(false);
+  const [error, setError]   = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,57 +17,76 @@ export default function ForgotPassword() {
       await api.post('/auth/forgot-password', { email });
       setSent(true);
     } catch (err) {
-      setError(err.response?.data?.error || 'Something went wrong');
+      setError(err.response?.data?.error || 'Something went wrong. Try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-md animate-fade-in">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
-            <span className="text-white font-bold text-lg">V</span>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+      <div className="w-full max-w-[400px] animate-fade-in">
+
+        {/* Logo */}
+        <div className="flex items-center gap-2.5 mb-8">
+          <div className="w-8 h-8 rounded-md bg-blue-500 flex items-center justify-center shrink-0">
+            <span className="text-white font-medium text-sm leading-none">V</span>
           </div>
-          <span className="font-bold text-slate-800">Venderra</span>
+          <span className="font-medium text-gray-800 text-[15px]">Venderra</span>
         </div>
 
-        <div className="bg-white rounded-2xl p-8 shadow-sm shadow-slate-200/50 border border-slate-200/80">
+        <div className="card p-8">
           {sent ? (
             <div className="text-center animate-fade-in">
-              <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle2 size={28} className="text-amber-500" />
+              <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 size={22} className="text-blue-500" strokeWidth={1.5} />
               </div>
-              <h2 className="text-xl font-bold text-slate-800 mb-2">Check your email</h2>
-              <p className="text-sm text-slate-500 mb-6">If an account exists with <strong>{email}</strong>, we've sent a password reset link.</p>
-              <Link to="/login" className="inline-flex items-center gap-2 text-sm font-semibold text-orange-600 hover:text-orange-700">
-                <ArrowLeft size={14} /> Back to login
+              <h2 className="text-lg font-medium text-gray-900 mb-2">Check your email</h2>
+              <p className="text-sm text-gray-400 font-light mb-6 leading-relaxed">
+                If an account exists for <span className="text-gray-600 font-normal">{email}</span>, we've sent a password reset link.
+              </p>
+              <Link to="/login" className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                <ArrowLeft size={14} /> Back to sign in
               </Link>
             </div>
           ) : (
             <>
-              <h2 className="text-xl font-bold text-slate-800 mb-1">Forgot password?</h2>
-              <p className="text-sm text-slate-500 mb-6">Enter your email and we'll send you a reset link.</p>
+              <h2 className="text-lg font-medium text-gray-900 mb-1">Forgot password?</h2>
+              <p className="text-sm text-gray-400 font-light mb-6">Enter your email and we'll send you a reset link.</p>
 
-              {error && <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-sm font-medium">{error}</div>}
+              {error && <div className="alert alert-error mb-4">{error}</div>}
 
-              <form onSubmit={handleSubmit}>
-                <div className="mb-5">
-                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Email address</label>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="form-label">Email address</label>
                   <div className="relative">
-                    <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input type="email" className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@business.com" />
+                    <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" />
+                    <input
+                      type="email"
+                      className="input input-icon-left"
+                      placeholder="you@business.com"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      required
+                      autoComplete="email"
+                    />
                   </div>
                 </div>
-                <button type="submit" disabled={loading} className="w-full py-3 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:shadow-xl transition-all active:scale-[0.98] disabled:opacity-50">
-                  {loading ? 'Sending...' : 'Send Reset Link'}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn btn-primary btn-lg w-full justify-center"
+                >
+                  {loading
+                    ? <span className="spinner spinner-sm" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} />
+                    : 'Send reset link'
+                  }
                 </button>
               </form>
 
               <div className="text-center mt-5">
-                <Link to="/login" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 font-medium">
-                  <ArrowLeft size={14} /> Back to login
+                <Link to="/login" className="inline-flex items-center gap-1.5 text-sm font-normal text-gray-400 hover:text-gray-700 transition-colors">
+                  <ArrowLeft size={14} /> Back to sign in
                 </Link>
               </div>
             </>

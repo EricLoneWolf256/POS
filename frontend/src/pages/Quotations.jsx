@@ -9,10 +9,7 @@ export default function Quotations() {
   const [products, setProducts] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({
-    customerId: '',
-    validUntil: '',
-    notes: '',
-    discountAmount: 0,
+    customerId: '', validUntil: '', notes: '', discountAmount: 0,
     items: [{ productId: '', description: '', quantity: 1, unitPrice: 0 }],
   });
   const { user } = useAuth();
@@ -32,10 +29,7 @@ export default function Quotations() {
     items[idx] = { ...items[idx], [field]: value };
     if (field === 'productId') {
       const product = products.find(p => p.id === parseInt(value));
-      if (product) {
-        items[idx].unitPrice = parseFloat(product.selling_price);
-        items[idx].description = product.name;
-      }
+      if (product) { items[idx].unitPrice = parseFloat(product.selling_price); items[idx].description = product.name; }
     }
     setForm({ ...form, items });
   };
@@ -63,129 +57,149 @@ export default function Quotations() {
     load();
   };
 
-  const inputClass = "w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:bg-white focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200";
+  const STATUS_BADGE = {
+    sent: 'badge-blue', accepted: 'badge-green', rejected: 'badge-red', draft: 'badge-gray',
+  };
 
   return (
-    <div className="animate-fade-in">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-800">Quotations</h1>
-        <button className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:shadow-xl hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]" onClick={() => setShowModal(true)}>
-          <Plus size={18} /> New Quotation
+    <div className="space-y-5 animate-fade-in">
+
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="page-title">Quotations</h1>
+          <p className="page-subtitle">Create and manage customer quotes</p>
+        </div>
+        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+          <Plus size={15} /> New Quotation
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm shadow-slate-200/50 overflow-hidden">
+      {/* Table */}
+      <div className="card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="table">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50">
-                <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Quote #</th>
-                <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Customer</th>
-                <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Subtotal</th>
-                <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Tax (18%)</th>
-                <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Discount</th>
-                <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total</th>
-                <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Status</th>
-                <th className="text-left py-3 px-5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Date</th>
+              <tr>
+                <th>Quote #</th>
+                <th>Customer</th>
+                <th>Subtotal</th>
+                <th>Tax (18%)</th>
+                <th>Discount</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Date</th>
               </tr>
             </thead>
             <tbody>
               {quotations.map(q => (
-                <tr key={q.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
-                  <td className="py-3.5 px-5 text-sm font-medium text-slate-700">{q.quote_number}</td>
-                  <td className="py-3.5 px-5 text-sm text-slate-600">{q.customer_name || 'Walk-in'}</td>
-                  <td className="py-3.5 px-5 text-sm text-slate-600">{formatCurrency(q.subtotal, user?.currency)}</td>
-                  <td className="py-3.5 px-5 text-sm text-slate-600">{formatCurrency(q.tax_amount, user?.currency)}</td>
-                  <td className="py-3.5 px-5 text-sm text-slate-600">{formatCurrency(q.discount_amount, user?.currency)}</td>
-                  <td className="py-3.5 px-5 text-sm font-semibold text-slate-800">{formatCurrency(q.total_amount, user?.currency)}</td>
-                  <td className="py-3.5 px-5">
-                    <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                      q.status === 'sent' ? 'bg-blue-50 text-blue-600 ring-1 ring-blue-100/50'
-                      : q.status === 'accepted' ? 'bg-amber-50 text-amber-600 ring-1 ring-amber-100/50'
-                      : q.status === 'rejected' ? 'bg-red-50 text-red-600 ring-1 ring-red-100/50'
-                      : 'bg-slate-50 text-slate-600 ring-1 ring-slate-100/50'
-                    }`}>
-                      {q.status}
-                    </span>
+                <tr key={q.id}>
+                  <td className="font-mono text-[12px] text-gray-600">{q.quote_number}</td>
+                  <td className="text-gray-600">{q.customer_name || 'Walk-in'}</td>
+                  <td className="tabular-nums text-gray-600">{formatCurrency(q.subtotal, user?.currency)}</td>
+                  <td className="tabular-nums text-gray-600">{formatCurrency(q.tax_amount, user?.currency)}</td>
+                  <td className="tabular-nums text-gray-600">{formatCurrency(q.discount_amount, user?.currency)}</td>
+                  <td className="tabular-nums font-medium text-gray-900">{formatCurrency(q.total_amount, user?.currency)}</td>
+                  <td>
+                    <span className={`badge ${STATUS_BADGE[q.status] ?? 'badge-gray'}`}>{q.status}</span>
                   </td>
-                  <td className="py-3.5 px-5 text-sm text-slate-400">{formatDate(q.created_at)}</td>
+                  <td className="tabular-nums text-gray-400">{formatDate(q.created_at)}</td>
                 </tr>
               ))}
-              {quotations.length === 0 && (
-                <tr><td colSpan={8} className="py-16 text-center">
-                  <FileText size={40} className="mx-auto mb-3 text-slate-200" />
-                  <p className="text-sm font-medium text-slate-400">No quotations yet</p>
-                </td></tr>
+              {!quotations.length && (
+                <tr>
+                  <td colSpan={8}>
+                    <div className="empty-state">
+                      <FileText size={32} className="text-gray-200" />
+                      <p>No quotations yet</p>
+                      <span>Create your first quote for a customer</span>
+                    </div>
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
 
+      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[200] animate-fade-in" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-2xl p-8 w-[90%] max-w-[700px] max-h-[90vh] overflow-y-auto shadow-2xl shadow-slate-900/10 animate-modal-enter" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold tracking-tight text-slate-800">Create Quotation</h3>
-              <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all" onClick={() => setShowModal(false)}><X size={18} /></button>
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal modal-lg animate-modal-enter" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Create Quotation</h3>
+              <button className="btn btn-ghost btn-sm p-1" onClick={() => setShowModal(false)}><X size={16} /></button>
             </div>
-            <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Customer</label>
-                  <select className={inputClass} value={form.customerId} onChange={e => setForm({...form, customerId: e.target.value})}>
-                    <option value="">Walk-in Customer</option>
-                    {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
+            <form id="quotation-form" onSubmit={handleSubmit}>
+              <div className="modal-body space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="form-label">Customer</label>
+                    <select className="input" value={form.customerId} onChange={e => setForm({...form, customerId: e.target.value})}>
+                      <option value="">Walk-in Customer</option>
+                      {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label">Valid Until</label>
+                    <input className="input" type="date" value={form.validUntil} onChange={e => setForm({...form, validUntil: e.target.value})} />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Valid Until</label>
-                  <input className={inputClass} type="date" value={form.validUntil} onChange={e => setForm({...form, validUntil: e.target.value})} />
-                </div>
-              </div>
 
-              <div className="mb-4">
-                <div className="flex justify-between items-center mb-3">
-                  <label className="text-[13px] font-semibold text-slate-600">Items</label>
-                  <button type="button" className="text-sm text-orange-600 font-semibold hover:text-orange-700 transition-colors" onClick={addItem}>+ Add Item</button>
+                {/* Line items */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="form-label" style={{ margin: 0 }}>Items</label>
+                    <button type="button" className="text-[12px] font-medium text-blue-600 hover:text-blue-700 transition-colors" onClick={addItem}>+ Add Item</button>
+                  </div>
+                  <div className="space-y-2">
+                    {form.items.map((item, idx) => (
+                      <div key={idx} className="grid grid-cols-[1fr_2fr_80px_120px_36px] gap-2">
+                        <select className="input" value={item.productId} onChange={e => updateItem(idx, 'productId', e.target.value)} required>
+                          <option value="">Product</option>
+                          {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                        </select>
+                        <input className="input" placeholder="Description" value={item.description} onChange={e => updateItem(idx, 'description', e.target.value)} />
+                        <input className="input" type="number" placeholder="Qty" value={item.quantity} onChange={e => updateItem(idx, 'quantity', e.target.value)} required />
+                        <input className="input" type="number" placeholder="Price" value={item.unitPrice} onChange={e => updateItem(idx, 'unitPrice', e.target.value)} required />
+                        {form.items.length > 1 && (
+                          <button type="button" className="btn btn-ghost p-1 text-red-400 hover:bg-red-50 hover:text-red-600 flex items-center justify-center" onClick={() => removeItem(idx)}>
+                            <X size={14} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  {form.items.map((item, idx) => (
-                    <div key={idx} className="grid grid-cols-[1fr_2fr_80px_120px_40px] gap-2">
-                      <select className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10" value={item.productId} onChange={e => updateItem(idx, 'productId', e.target.value)} required>
-                        <option value="">Product</option>
-                        {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                      </select>
-                      <input className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10" placeholder="Description" value={item.description} onChange={e => updateItem(idx, 'description', e.target.value)} />
-                      <input className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10" type="number" placeholder="Qty" value={item.quantity} onChange={e => updateItem(idx, 'quantity', e.target.value)} required />
-                      <input className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10" type="number" placeholder="Price" value={item.unitPrice} onChange={e => updateItem(idx, 'unitPrice', e.target.value)} required />
-                      {form.items.length > 1 && (
-                        <button type="button" className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all flex items-center justify-center" onClick={() => removeItem(idx)}><X size={14} /></button>
-                      )}
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="form-label">Notes</label>
+                    <textarea className="input" rows={2} value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="form-label">Discount Amount</label>
+                    <input className="input" type="number" value={form.discountAmount} onChange={e => setForm({...form, discountAmount: e.target.value})} />
+                    <div className="mt-3 bg-gray-50 border border-gray-100 rounded-md p-3 space-y-1.5 text-[13px]">
+                      <div className="flex justify-between text-gray-500">
+                        <span>Subtotal</span>
+                        <span className="tabular-nums font-medium text-gray-700">{formatCurrency(subtotal, user?.currency)}</span>
+                      </div>
+                      <div className="flex justify-between text-gray-500">
+                        <span>VAT (18%)</span>
+                        <span className="tabular-nums font-medium text-gray-700">{formatCurrency(tax, user?.currency)}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-gray-200 pt-1.5">
+                        <span className="font-semibold text-gray-700">Total</span>
+                        <span className="tabular-nums font-semibold text-gray-900">{formatCurrency(total, user?.currency)}</span>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Notes</label>
-                  <textarea className={inputClass} value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} rows={2} />
-                </div>
-                <div>
-                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Discount Amount</label>
-                  <input className={inputClass} type="number" value={form.discountAmount} onChange={e => setForm({...form, discountAmount: e.target.value})} />
-                  <div className="mt-3 p-3 bg-slate-50/80 rounded-xl space-y-1.5 text-sm">
-                    <div className="flex justify-between"><span className="text-slate-400">Subtotal</span><span className="font-medium text-slate-700">{formatCurrency(subtotal, user?.currency)}</span></div>
-                    <div className="flex justify-between"><span className="text-slate-400">VAT (18%)</span><span className="font-medium text-slate-700">{formatCurrency(tax, user?.currency)}</span></div>
-                    <div className="flex justify-between border-t border-slate-200 pt-1.5"><span className="font-semibold text-slate-700">Total</span><span className="font-bold text-slate-800">{formatCurrency(total, user?.currency)}</span></div>
                   </div>
                 </div>
               </div>
-
-              <div className="flex gap-3 justify-end mt-4">
-                <button type="button" className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all duration-200" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-orange-500/25 hover:from-orange-700 hover:to-amber-700 transition-all duration-200 active:scale-[0.98]">Create Quotation</button>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="submit" form="quotation-form" className="btn btn-primary">Create Quotation</button>
               </div>
             </form>
           </div>
