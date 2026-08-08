@@ -124,7 +124,7 @@ export default function Customers() {
       {/* Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal animate-modal-enter" onClick={e => e.stopPropagation()}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">{editingCustomer ? 'Edit Customer' : 'Add Customer'}</h3>
               <button className="btn btn-ghost btn-sm p-1" onClick={() => setShowModal(false)}>

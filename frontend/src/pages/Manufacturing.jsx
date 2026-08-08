@@ -191,7 +191,7 @@ export default function Manufacturing() {
       {/* Add Material Modal */}
       {showMaterialModal && (
         <div className="modal-overlay" onClick={() => setShowMaterialModal(false)}>
-          <div className="modal animate-modal-enter" onClick={e => e.stopPropagation()}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">Add Raw Material</h3>
               <button className="btn btn-ghost btn-sm p-1" onClick={() => setShowMaterialModal(false)}><X size={16} /></button>
@@ -229,7 +229,7 @@ export default function Manufacturing() {
       {/* Create BOM Modal */}
       {showBomModal && (
         <div className="modal-overlay" onClick={() => setShowBomModal(false)}>
-          <div className="modal modal-lg animate-modal-enter" onClick={e => e.stopPropagation()}>
+          <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">Create Bill of Materials</h3>
               <button className="btn btn-ghost btn-sm p-1" onClick={() => setShowBomModal(false)}><X size={16} /></button>
@@ -288,7 +288,7 @@ export default function Manufacturing() {
       {/* New Production Order Modal */}
       {showOrderModal && (
         <div className="modal-overlay" onClick={() => setShowOrderModal(false)}>
-          <div className="modal animate-modal-enter" onClick={e => e.stopPropagation()}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">New Production Order</h3>
               <button className="btn btn-ghost btn-sm p-1" onClick={() => setShowOrderModal(false)}><X size={16} /></button>

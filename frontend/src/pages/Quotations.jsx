@@ -125,7 +125,7 @@ export default function Quotations() {
       {/* Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal modal-lg animate-modal-enter" onClick={e => e.stopPropagation()}>
+          <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">Create Quotation</h3>
               <button className="btn btn-ghost btn-sm p-1" onClick={() => setShowModal(false)}><X size={16} /></button>

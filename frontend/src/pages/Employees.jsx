@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Plus, X, Pencil, Search, Clock, LogIn, LogOut, Users,
   Key, TrendingUp, DollarSign, UserX, UserCheck, Briefcase,
+  CheckCircle2, AlertCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -33,6 +35,13 @@ export default function Employees() {
   const [branches, setBranches] = useState([]);
   const [perfData, setPerfData] = useState(null);
   const [perfPeriod, setPerfPeriod] = useState('today');
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
   useEffect(() => { load(); }, []);
 
@@ -66,25 +75,33 @@ export default function Employees() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
       const payload = { firstName: form.firstName, lastName: form.lastName, email: form.email, phone: form.phone || undefined, role: form.role, branchId: form.branchId || undefined };
       if (!editing && form.password) payload.password = form.password;
       if (editing) { await api.put(`/employees/${editing.id}`, payload); }
       else { await api.post('/employees', { ...payload, password: form.password }); }
       setShowModal(false);
+      showToast(editing ? 'Employee updated' : 'Employee created');
       load();
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to save employee');
+      showToast(err.response?.data?.error || 'Failed to save employee', 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handlePasswordReset = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
       await api.post(`/employees/${editing.id}/reset-password`, passwordForm);
       setShowPasswordModal(false);
+      showToast('Password reset successfully');
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to reset password');
+      showToast(err.response?.data?.error || 'Failed to reset password', 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -94,9 +111,10 @@ export default function Employees() {
         firstName: emp.first_name, lastName: emp.last_name, phone: emp.phone,
         role: emp.role, branchId: emp.branch_id, isActive: !emp.is_active,
       });
+      showToast(emp.is_active ? `${emp.first_name} deactivated` : `${emp.first_name} reactivated`);
       load();
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to update employee');
+      showToast(err.response?.data?.error || 'Failed to update employee', 'error');
     }
   };
 
@@ -112,6 +130,16 @@ export default function Employees() {
 
   return (
     <div className="space-y-5 animate-fade-in">
+
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-[600] flex items-center gap-2.5 px-4 py-3 rounded-lg text-sm font-medium border animate-slide-up ${
+          toast.type === 'error' ? 'alert alert-error' : 'alert alert-success'
+        }`}>
+          {toast.type === 'error' ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
+          {toast.message}
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -248,7 +276,14 @@ export default function Employees() {
                   </tr>
                 ))}
                 {!filtered.length && (
-                  <tr><td colSpan={7} className="text-center text-gray-400 py-10 text-sm">No employees found</td></tr>
+                  <tr>
+                    <td colSpan={7}>
+                      <div className="empty-state">
+                        <Users size={32} className="text-gray-200" />
+                        <p>No employees found</p>
+                      </div>
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
@@ -261,7 +296,7 @@ export default function Employees() {
       {/* Add/Edit Employee Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal animate-modal-enter" onClick={e => e.stopPropagation()}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title flex items-center gap-2">
                 <Briefcase size={15} /> {editing ? 'Edit Employee' : 'Add Employee'}
@@ -314,7 +349,10 @@ export default function Employees() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" form="employee-form" className="btn btn-primary">{editing ? 'Update' : 'Create Employee'}</button>
+                <button type="submit" form="employee-form" className="btn btn-primary" disabled={submitting}>
+                  {submitting ? <span className="spinner spinner-sm" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} /> : null}
+                  {editing ? 'Update' : 'Create Employee'}
+                </button>
               </div>
             </form>
           </div>
@@ -324,7 +362,7 @@ export default function Employees() {
       {/* Reset Password Modal */}
       {showPasswordModal && (
         <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
-          <div className="modal modal-sm animate-modal-enter" onClick={e => e.stopPropagation()}>
+          <div className="modal modal-sm" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title flex items-center gap-2"><Key size={15} /> Reset Password</h3>
               <button className="btn btn-ghost btn-sm p-1" onClick={() => setShowPasswordModal(false)}><X size={16} /></button>
@@ -341,7 +379,10 @@ export default function Employees() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowPasswordModal(false)}>Cancel</button>
-                <button type="submit" form="password-form" className="btn btn-primary">Reset Password</button>
+                <button type="submit" form="password-form" className="btn btn-primary" disabled={submitting}>
+                  {submitting ? <span className="spinner spinner-sm" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} /> : null}
+                  Reset Password
+                </button>
               </div>
             </form>
           </div>
@@ -351,7 +392,7 @@ export default function Employees() {
       {/* Performance Modal */}
       {showPerformance && (
         <div className="modal-overlay" onClick={() => { setShowPerformance(null); setPerfData(null); }}>
-          <div className="modal modal-lg animate-modal-enter" onClick={e => e.stopPropagation()}>
+          <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-[12px] font-bold">
@@ -447,26 +488,46 @@ export default function Employees() {
 
 function AttendanceTab() {
   const [records, setRecords] = useState([]);
+  const [toast, setToast] = useState(null);
   const { user } = useAuth();
 
   useEffect(() => { load(); }, []);
 
   const load = () => { api.get('/employees/attendance/today').then(res => setRecords(res.data)); };
 
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
   const amIClockedIn = records.some(r => r.user_id === user?.id && !r.clock_out);
 
   const handleClockIn = async () => {
-    try { await api.post('/employees/clock-in'); load(); }
-    catch (err) { alert(err.response?.data?.error || 'Failed to clock in'); }
+    try { await api.post('/employees/clock-in'); load(); showToast('Clocked in successfully'); }
+    catch (err) { showToast(err.response?.data?.error || 'Failed to clock in', 'error'); }
   };
 
   const handleClockOut = async () => {
-    try { const res = await api.post('/employees/clock-out'); alert(`Clocked out. Hours worked: ${res.data.hoursWorked}`); load(); }
-    catch (err) { alert(err.response?.data?.error || 'Failed to clock out'); }
+    try {
+      const res = await api.post('/employees/clock-out');
+      load();
+      showToast(`Clocked out — ${res.data.hoursWorked}h worked`);
+    }
+    catch (err) { showToast(err.response?.data?.error || 'Failed to clock out', 'error'); }
   };
 
   return (
     <div className="space-y-4">
+
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-[600] flex items-center gap-2.5 px-4 py-3 rounded-lg text-sm font-medium border animate-slide-up ${
+          toast.type === 'error' ? 'alert alert-error' : 'alert alert-success'
+        }`}>
+          {toast.type === 'error' ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
+          {toast.message}
+        </div>
+      )}
       {/* Clock in/out */}
       <div className="card p-5">
         <p className="text-[13px] font-medium text-gray-700 mb-3">Your shift</p>
@@ -528,8 +589,15 @@ function AttendanceTab() {
                 </tr>
               ))}
               {!records.length && (
-                <tr><td colSpan={5} className="text-center text-gray-400 py-8 text-sm">No attendance records today</td></tr>
-              )}
+                  <tr>
+                    <td colSpan={5}>
+                      <div className="empty-state">
+                        <Clock size={32} className="text-gray-200" />
+                        <p>No attendance records today</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
             </tbody>
           </table>
         </div>

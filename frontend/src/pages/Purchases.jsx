@@ -222,7 +222,7 @@ export default function Purchases() {
       {/* Supplier Modal */}
       {showSupplierModal && (
         <div className="modal-overlay" onClick={() => setShowSupplierModal(false)}>
-          <div className="modal animate-modal-enter" onClick={e => e.stopPropagation()}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">Add Supplier</h3>
               <button className="btn btn-ghost btn-sm p-1" onClick={() => setShowSupplierModal(false)}><X size={16} /></button>
@@ -264,7 +264,7 @@ export default function Purchases() {
       {/* Purchase Modal */}
       {showPurchaseModal && (
         <div className="modal-overlay" onClick={() => setShowPurchaseModal(false)}>
-          <div className="modal modal-lg animate-modal-enter" onClick={e => e.stopPropagation()}>
+          <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">New Purchase Order</h3>
               <button className="btn btn-ghost btn-sm p-1" onClick={() => setShowPurchaseModal(false)}><X size={16} /></button>
@@ -337,7 +337,7 @@ export default function Purchases() {
       {/* Expense Modal */}
       {showExpenseModal && (
         <div className="modal-overlay" onClick={() => setShowExpenseModal(false)}>
-          <div className="modal animate-modal-enter" onClick={e => e.stopPropagation()}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">Add Expense</h3>
               <button className="btn btn-ghost btn-sm p-1" onClick={() => setShowExpenseModal(false)}><X size={16} /></button>

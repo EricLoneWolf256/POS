@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, X, Pencil, Check, CreditCard, Upload, Trash2, Building2, ShieldAlert, Users, TrendingUp, ToggleLeft, ToggleRight, Search } from 'lucide-react';
+import { Plus, X, Pencil, Check, CreditCard, Upload, Trash2, Building2, ShieldAlert, Users, TrendingUp, ToggleLeft, ToggleRight, Search, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
@@ -17,6 +17,16 @@ export default function Settings() {
   const [editingBranch, setEditingBranch] = useState(null);
   const [branchForm, setBranchForm] = useState({ name: '', code: '', address: '', phone: '' });
   const [uploading, setUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const showConfirm = (message, onConfirm) => setConfirmDialog({ message, onConfirm });
   const [adminStats, setAdminStats] = useState(null);
   const [adminBusinesses, setAdminBusinesses] = useState([]);
   const [adminTotal, setAdminTotal] = useState(0);
@@ -58,11 +68,20 @@ export default function Settings() {
 
   const handleUserSubmit = async (e) => {
     e.preventDefault();
-    const payload = { ...userForm, branchId: userForm.branchId || undefined };
-    if (!payload.password) delete payload.password;
-    if (editingUser) { await api.put(`/users/${editingUser.id}`, payload); }
-    else { await api.post('/users', payload); }
-    setShowUserModal(false); load();
+    setSubmitting(true);
+    try {
+      const payload = { ...userForm, branchId: userForm.branchId || undefined };
+      if (!payload.password) delete payload.password;
+      if (editingUser) { await api.put(`/users/${editingUser.id}`, payload); }
+      else { await api.post('/users', payload); }
+      setShowUserModal(false);
+      showToast(editingUser ? 'User updated' : 'User created');
+      load();
+    } catch (err) {
+      showToast(err.response?.data?.error || 'Failed to save user', 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleLogoUpload = async (e) => {
@@ -79,31 +98,41 @@ export default function Settings() {
 
   const handleBranchSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
       if (editingBranch) { await api.put(`/auth/branches/${editingBranch.id}`, branchForm); }
       else { await api.post('/auth/branches', branchForm); }
-      setShowBranchModal(false); load();
-    } catch (err) { alert(err.response?.data?.error || 'Failed to save branch'); }
+      setShowBranchModal(false);
+      showToast(editingBranch ? 'Branch updated' : 'Branch created');
+      load();
+    } catch (err) {
+      showToast(err.response?.data?.error || 'Failed to save branch', 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleDeleteBranch = async (id) => {
-    if (!confirm('Deactivate this branch?')) return;
-    try { await api.delete(`/auth/branches/${id}`); load(); }
-    catch (err) { alert(err.response?.data?.error || 'Failed'); }
+  const handleDeleteBranch = (id) => {
+    showConfirm('Deactivate this branch? This cannot be undone.', async () => {
+      try { await api.delete(`/auth/branches/${id}`); showToast('Branch deactivated'); load(); }
+      catch (err) { showToast(err.response?.data?.error || 'Failed to deactivate branch', 'error'); }
+    });
   };
 
   const handleUpgrade = async (planId) => {
     try {
       const res = await api.post('/payments/initialize', { planId, redirectUrl: `${window.location.origin}/app/settings?tab=subscription` });
       if (res.data.paymentLink) window.location.href = res.data.paymentLink;
-      else if (res.data.simulated) alert('Payment gateway not configured.');
-    } catch (err) { alert(err.response?.data?.error || 'Payment init failed'); }
+      else if (res.data.simulated) showToast('Payment gateway not configured.', 'error');
+    } catch (err) { showToast(err.response?.data?.error || 'Payment init failed', 'error'); }
   };
 
-  const handleSuspendToggle = async (biz) => {
-    if (!confirm(`${biz.is_active ? 'Suspend' : 'Reactivate'} "${biz.name}"?`)) return;
-    await api.patch(`/admin/businesses/${biz.id}`, { is_active: !biz.is_active });
-    loadAdminData();
+  const handleSuspendToggle = (biz) => {
+    showConfirm(`${biz.is_active ? 'Suspend' : 'Reactivate'} "${biz.name}"?`, async () => {
+      await api.patch(`/admin/businesses/${biz.id}`, { is_active: !biz.is_active });
+      showToast(biz.is_active ? `"${biz.name}" suspended` : `"${biz.name}" reactivated`);
+      loadAdminData();
+    });
   };
 
   const handleExtend = async (bizId) => {
@@ -133,6 +162,35 @@ export default function Settings() {
 
   return (
     <div className="space-y-5 animate-fade-in">
+
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-[600] flex items-center gap-2.5 px-4 py-3 rounded-lg text-sm font-medium border animate-slide-up ${
+          toast.type === 'error' ? 'alert alert-error' : 'alert alert-success'
+        }`}>
+          {toast.type === 'error' ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
+          {toast.message}
+        </div>
+      )}
+
+      {/* Confirm Dialog */}
+      {confirmDialog && (
+        <div className="modal-overlay" onClick={() => setConfirmDialog(null)}>
+          <div className="modal modal-sm" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Confirm Action</h3>
+              <button className="btn btn-ghost btn-sm p-1" onClick={() => setConfirmDialog(null)}><X size={16} /></button>
+            </div>
+            <div className="modal-body">
+              <p className="text-[13px] text-gray-600">{confirmDialog.message}</p>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setConfirmDialog(null)}>Cancel</button>
+              <button className="btn btn-danger" onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(null); }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div>
@@ -247,7 +305,7 @@ export default function Settings() {
       {/* Extend modal */}
       {selectedBusiness && (
         <div className="modal-overlay" onClick={() => setSelectedBusiness(null)}>
-          <div className="modal modal-sm animate-modal-enter" onClick={e => e.stopPropagation()}>
+          <div className="modal modal-sm" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">Extend Subscription</h3>
               <button className="btn btn-ghost btn-sm p-1" onClick={() => setSelectedBusiness(null)}><X size={16} /></button>
@@ -328,7 +386,16 @@ export default function Settings() {
                     </td>
                   </tr>
                 ))}
-                {!users.length && <tr><td colSpan={7} className="text-center text-gray-400 py-8 text-sm">No users found</td></tr>}
+                {!users.length && (
+                  <tr>
+                    <td colSpan={7}>
+                      <div className="empty-state">
+                        <Users size={32} className="text-gray-200" />
+                        <p>No users found</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -363,7 +430,16 @@ export default function Settings() {
                     </td>
                   </tr>
                 ))}
-                {!branches.length && <tr><td colSpan={6} className="text-center text-gray-400 py-8 text-sm">No branches found</td></tr>}
+                {!branches.length && (
+                  <tr>
+                    <td colSpan={6}>
+                      <div className="empty-state">
+                        <Building2 size={32} className="text-gray-200" />
+                        <p>No branches found</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -465,7 +541,7 @@ export default function Settings() {
       {/* ── User Modal ── */}
       {showUserModal && (
         <div className="modal-overlay" onClick={() => setShowUserModal(false)}>
-          <div className="modal animate-modal-enter" onClick={e => e.stopPropagation()}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">{editingUser ? 'Edit User' : 'Add User'}</h3>
               <button className="btn btn-ghost btn-sm p-1" onClick={() => setShowUserModal(false)}><X size={16} /></button>
@@ -511,7 +587,10 @@ export default function Settings() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowUserModal(false)}>Cancel</button>
-                <button type="submit" form="user-form" className="btn btn-primary">{editingUser ? 'Update User' : 'Create User'}</button>
+                <button type="submit" form="user-form" className="btn btn-primary" disabled={submitting}>
+                  {submitting ? <span className="spinner spinner-sm" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} /> : null}
+                  {editingUser ? 'Update User' : 'Create User'}
+                </button>
               </div>
             </form>
           </div>
@@ -521,7 +600,7 @@ export default function Settings() {
       {/* ── Branch Modal ── */}
       {showBranchModal && (
         <div className="modal-overlay" onClick={() => setShowBranchModal(false)}>
-          <div className="modal animate-modal-enter" onClick={e => e.stopPropagation()}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title flex items-center gap-2"><Building2 size={15} /> {editingBranch ? 'Edit Branch' : 'Add Branch'}</h3>
               <button className="btn btn-ghost btn-sm p-1" onClick={() => setShowBranchModal(false)}><X size={16} /></button>
@@ -549,7 +628,10 @@ export default function Settings() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowBranchModal(false)}>Cancel</button>
-                <button type="submit" form="branch-form" className="btn btn-primary">{editingBranch ? 'Update Branch' : 'Create Branch'}</button>
+                <button type="submit" form="branch-form" className="btn btn-primary" disabled={submitting}>
+                  {submitting ? <span className="spinner spinner-sm" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} /> : null}
+                  {editingBranch ? 'Update Branch' : 'Create Branch'}
+                </button>
               </div>
             </form>
           </div>

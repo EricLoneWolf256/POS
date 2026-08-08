@@ -208,7 +208,7 @@ export default function StockPage() {
       {/* Adjust Stock Modal */}
       {showAdjust && (
         <div className="modal-overlay" onClick={() => setShowAdjust(false)}>
-          <div className="modal animate-modal-enter" onClick={e => e.stopPropagation()}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title flex items-center gap-2">
                 <ArrowRightLeft size={16} /> Adjust Stock
@@ -265,7 +265,7 @@ export default function StockPage() {
       {/* Transfer Stock Modal */}
       {showTransfer && (
         <div className="modal-overlay" onClick={() => setShowTransfer(false)}>
-          <div className="modal animate-modal-enter" onClick={e => e.stopPropagation()}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title flex items-center gap-2">
                 <ArrowRightLeft size={16} /> Transfer Stock
